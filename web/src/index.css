@@ -1,0 +1,166 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------ */
+/* Sola — EXACT design spec. Palette, type, motion locked.            */
+/* ------------------------------------------------------------------ */
+@theme {
+  --font-display: "Space Grotesk", sans-serif;
+  --font-sans: "Inter", sans-serif;
+
+  /* Exact palette — nothing else, no gradients (except numeral shimmer) */
+  --color-paper: #faf6f0;
+  --color-ink: #191512;
+  --color-ink-soft: #6b5f52;
+  --color-line: #e8dfd3;
+
+  /* Danger scale — graphics only, never body text */
+  --color-d-safe: #15803d;
+  --color-d-caution: #ca8a04;
+  --color-d-hot: #ea580c;
+  --color-d-danger: #dc2626;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Custom text selection — orange bg, white text */
+  ::selection {
+    background: var(--color-d-hot);
+    color: #fff;
+  }
+
+  /* 2px orange focus outlines */
+  :focus-visible {
+    outline: 2px solid var(--color-d-hot);
+    outline-offset: 2px;
+  }
+
+  input[type="time"]::-webkit-calendar-picker-indicator {
+    opacity: 0.5;
+    cursor: pointer;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+  }
+
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Subtle grain overlay ~3% */
+  .grain::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    pointer-events: none;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Solid heat-orange numeral with a ONE-SHOT shimmer sweep on load, then
+     settles to solid #EA580C. The only animated gradient, per spec. */
+  .numeral-shimmer-once {
+    color: #ea580c;
+    background: linear-gradient(
+      100deg,
+      #ea580c 0%,
+      #ca8a04 42%,
+      #ffffff 50%,
+      #ca8a04 58%,
+      #ea580c 100%
+    );
+    background-size: 220% 100%;
+    background-position: 220% 0;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: numeral-sweep-once 1.1s ease-out 0.2s 1 forwards;
+  }
+  @keyframes numeral-sweep-once {
+    to {
+      background-position: 0 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .numeral-shimmer-once {
+      animation: none;
+      -webkit-text-fill-color: #ea580c;
+    }
+  }
+
+  /* Hero numeral shimmer — warm-toned gradient clipped to text, CSS-only.
+     This is the ONLY permitted gradient. */
+  .numeral-shimmer {
+    background: linear-gradient(
+      100deg,
+      #ea580c 0%,
+      #ca8a04 35%,
+      #ea580c 50%,
+      #dc2626 70%,
+      #ea580c 100%
+    );
+    background-size: 220% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    animation: numeral-sweep 6s linear infinite;
+  }
+  @keyframes numeral-sweep {
+    to {
+      background-position: 220% 0;
+    }
+  }
+
+  /* Skeleton shimmer in sand tones — loading, never a spinner */
+  .skeleton {
+    background: linear-gradient(
+      100deg,
+      #efe7db 20%,
+      #f6f0e7 40%,
+      #efe7db 60%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-sweep 1.4s ease-in-out infinite;
+  }
+  @keyframes skeleton-sweep {
+    to {
+      background-position: -200% 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .numeral-shimmer,
+    .skeleton {
+      animation: none;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}

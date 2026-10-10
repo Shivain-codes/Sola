@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+.env
+.env.local
+.amplify/
+amplify_outputs.json
+tmp/
+.playwright-mcp/
+
+# test + build artifacts
+web/.screenshots/
+lambda/*.zip
+.agents/
+tsconfig.tsbuildinfo
+*.tsbuildinfo

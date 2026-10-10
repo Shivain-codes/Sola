@@ -1,0 +1,10 @@
+{
+  "name": "sola-generate-plan",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Sola generatePlan Lambda — Bedrock Nova Lite heat-safety plan.",
+  "main": "index.mjs",
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.670.0"
+  }
+}
