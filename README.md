@@ -6,7 +6,7 @@
 
 **Track:** Heat and Water (heatwaves) · Environmental Hacks (Bharat Builds Tour)
 
-- 🔗 **Live app:** `<AMPLIFY_URL>` *(no login — open on a phone)*
+- 🔗 **Live app:** `https://www.shiviverse.in/` *(no login — open on a phone)*
 - 🎬 **Demo video (≤3 min):** `<YOUTUBE_URL>`
 - 💻 **Repo:** `<GITHUB_URL>` *(public)*
 
