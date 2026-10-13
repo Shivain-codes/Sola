@@ -7,8 +7,8 @@
 **Track:** Heat and Water (heatwaves) · Environmental Hacks (Bharat Builds Tour)
 
 - 🔗 **Live app:** https://www.shiviverse.in/ *(no login — open on a phone)*
-- 🎬 **Demo video (≤3 min):** `<YOUTUBE_URL>`
-- 💻 **Repo:** `<GITHUB_URL>` *(public)*
+- 🎬 **Demo video (≤3 min):** https://youtu.be/rA2llzrItWg
+- 💻 **Repo:** https://github.com/Shivain-codes/Sola *(public)*
 
 ---
 
