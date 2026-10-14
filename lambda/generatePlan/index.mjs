@@ -40,8 +40,9 @@ const CORS = {
 };
 
 const SYSTEM_PROMPT =
-  "You are a heat-safety advisor for outdoor workers in India. " +
-  "Write in simple, short sentences. No jargon. No extra sections.";
+  "You are a heat-safety advisor for outdoor workers. " +
+  "Write in simple, short sentences. No jargon. No extra sections. " +
+  "Tailor the advice to the specific worker, their job, and their age when given.";
 
 export const handler = async (event) => {
   const method =
@@ -67,8 +68,12 @@ export const handler = async (event) => {
     Number.isFinite(ageNum) && ageNum >= 1 && ageNum <= 120
       ? Math.round(ageNum)
       : null;
+  // "Other" with a custom value uses that value; "Other" left blank becomes a
+  // generic "outdoor worker" so copy never reads "As a Other".
   const effectiveJob =
-    jobType === "Other" && customOccupation ? customOccupation : jobType;
+    jobType === "Other"
+      ? customOccupation || "outdoor worker"
+      : jobType;
   const shiftStart = str(input.shiftStart) || "";
   const shiftEnd = str(input.shiftEnd) || "";
   const hourly = Array.isArray(input.hourly) ? input.hourly : [];
@@ -147,9 +152,22 @@ async function generateWithNova({
     `  "ifSymptoms": ["step 1","step 2","step 3"]`,
     `}`,
     `Rules:`,
-    `- riskSummary: exactly 2 short lines.`,
+    `- riskSummary: exactly 2 short lines. The FIRST line MUST name the worker's`,
+    `  job ("${jobType}") so the advice feels written for them, e.g. start it with`,
+    `  "As a ${jobType}, ...".`,
     `- timeline: one block per 1-2 shift hours. action is Work, Rest, or Hydrate.`,
-    `  Tell them to rest and hydrate during the hottest blocks.`,
+    `  Tell them to rest and hydrate during the hottest blocks. EVERY block must`,
+    `  have a short, non-empty note — never leave a note blank.`,
+    ...(age != null
+      ? [
+          `- The worker is ${age}. Make the schedule visibly age-aware: schedule`,
+          `  MORE frequent Rest/Hydrate blocks than usual. Mention the age reason in`,
+          `  the SECOND riskSummary line and in ONE or TWO timeline notes only (e.g.`,
+          `  "At ${age}, take a short break every 30 min"). Keep the other timeline`,
+          `  notes specific to that hour — do NOT repeat the same age sentence in`,
+          `  every block.`,
+        ]
+      : []),
     `- warningSigns: exactly 5 heatstroke warning signs, plain words.`,
     `- ifSymptoms: what to do if symptoms appear. Short steps.`,
     `- No text outside the JSON.`,
