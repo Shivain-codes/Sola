@@ -24,8 +24,15 @@ export type Band = {
   tone: HeatTone;
 };
 
+/** Live air-quality reading for a location (US AQI + PM2.5). */
+export type AirQuality = { aqi: number; pm25: number | null };
+
+/** AQI band: worker-readable label, plain meaning, and a semantic tone. */
+export type AqiBand = { label: string; meaning: string; tone: HeatTone };
+
 const GEOCODE_URL = "https://geocoding-api.open-meteo.com/v1/search";
 const FORECAST_URL = "https://api.open-meteo.com/v1/forecast";
+const AIR_QUALITY_URL = "https://air-quality-api.open-meteo.com/v1/air-quality";
 
 /** Geocode a city name to coordinates. Throws if not found. */
 export async function geocodeCity(city: string): Promise<GeoResult> {
@@ -70,6 +77,74 @@ export async function fetchHourlyHeat(
       hiC: heatIndex(tempC, humidity),
     };
   });
+}
+
+/**
+ * Fetch the current US AQI and PM2.5 for a location. Display-only and
+ * failure-proof: this swallows ALL errors (non-ok response, missing data,
+ * network/parse failures) and returns null so plan generation can never break.
+ * Never throws.
+ */
+export async function fetchAirQuality(
+  lat: number,
+  lon: number
+): Promise<AirQuality | null> {
+  try {
+    const url =
+      `${AIR_QUALITY_URL}?latitude=${lat}&longitude=${lon}` +
+      `&current=us_aqi,pm2_5`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const aqi = data?.current?.us_aqi;
+    const pm25 = data?.current?.pm2_5;
+    if (!Number.isFinite(aqi)) return null;
+    return { aqi, pm25: Number.isFinite(pm25) ? pm25 : null };
+  } catch {
+    return null;
+  }
+}
+
+/** US AQI band → worker-readable label, plain-language meaning, and tone. */
+export function aqiBandFor(aqi: number): AqiBand {
+  if (aqi <= 50)
+    return {
+      label: "Good",
+      meaning: "Air is clean — no haze precautions needed.",
+      tone: "safe",
+    };
+  if (aqi <= 100)
+    return {
+      label: "Moderate",
+      meaning:
+        "Light haze. Sensitive workers should watch for throat or eye irritation.",
+      tone: "caution",
+    };
+  if (aqi <= 150)
+    return {
+      label: "Unhealthy for Sensitive Groups",
+      meaning:
+        "Wear a mask if you have asthma or heart issues; take more breaks.",
+      tone: "hot",
+    };
+  if (aqi <= 200)
+    return {
+      label: "Unhealthy",
+      meaning:
+        "Wear an N95 mask. Cut heavy exertion; rest in cleaner air when you can.",
+      tone: "danger",
+    };
+  if (aqi <= 300)
+    return {
+      label: "Very Unhealthy",
+      meaning: "Avoid prolonged outdoor work. An N95 mask is essential.",
+      tone: "extreme",
+    };
+  return {
+    label: "Hazardous",
+    meaning: "Outdoor work is unsafe. Stay indoors if at all possible.",
+    tone: "extreme",
+  };
 }
 
 /**

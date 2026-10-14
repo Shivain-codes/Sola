@@ -3,9 +3,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   geocodeCity,
   fetchHourlyHeat,
+  fetchAirQuality,
   hoursInShift,
   bandFor,
   type HourlyHeat,
+  type AirQuality,
 } from "./lib/heat";
 import { generatePlan, type PlanResult } from "./lib/plan";
 import SafetyCard from "./components/SafetyCard";
@@ -54,6 +56,7 @@ export default function App() {
   const [placeName, setPlaceName] = useState<string | null>(null);
   const [shiftHours, setShiftHours] = useState<HourlyHeat[]>([]);
   const [planResult, setPlanResult] = useState<PlanResult | null>(null);
+  const [airQuality, setAirQuality] = useState<AirQuality | null>(null);
 
   const [gauge, setGauge] = useState<Gauge>(null);
   const [gaugeLoading, setGaugeLoading] = useState(false);
@@ -99,6 +102,7 @@ export default function App() {
     setShiftHours([]);
     setPlaceName(null);
     setPlanResult(null);
+    setAirQuality(null);
 
     if (!city.trim()) {
       setError("Enter a city name.");
@@ -108,6 +112,8 @@ export default function App() {
     setLoading(true);
     try {
       const geo = await geocodeCity(city.trim());
+      const aq = await fetchAirQuality(geo.lat, geo.lon);
+      setAirQuality(aq);
       const hourly = await fetchHourlyHeat(geo.lat, geo.lon);
       const startHour = Number(startTime.slice(0, 2));
       const endHour = Number(endTime.slice(0, 2));
@@ -319,6 +325,7 @@ export default function App() {
               plan={planResult.plan}
               source={planResult.source}
               hours={shiftHours}
+              airQuality={airQuality}
             />
           </div>
         )}

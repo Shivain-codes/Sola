@@ -9,7 +9,14 @@ import {
   Sun,
   Thermometer,
 } from "lucide-react";
-import { bandFor, hourLabel, type HeatTone, type HourlyHeat } from "../lib/heat";
+import {
+  aqiBandFor,
+  bandFor,
+  hourLabel,
+  type AirQuality,
+  type HeatTone,
+  type HourlyHeat,
+} from "../lib/heat";
 import type { Plan } from "../lib/plan";
 import { toneHex } from "../lib/tone";
 import { BandStamp, HeatNumeral } from "./ui/Readout";
@@ -20,6 +27,7 @@ type Props = {
   plan: Plan;
   source: "ai" | "fallback";
   hours: HourlyHeat[];
+  airQuality?: AirQuality | null;
 };
 
 /** Scroll-into-view wrapper: fade+rise once, spring physics. */
@@ -37,7 +45,7 @@ function Reveal({
   );
 }
 
-export default function SafetyCard({ plan, source, hours }: Props) {
+export default function SafetyCard({ plan, source, hours, airQuality }: Props) {
   const peakHiC = hours.length ? Math.max(...hours.map((h) => h.hiC)) : 0;
   const peakTone = bandFor(peakHiC).tone;
   const peak = peakWindow(hours);
@@ -47,6 +55,7 @@ export default function SafetyCard({ plan, source, hours }: Props) {
     <div className="flex flex-col">
       <RiskReadout lines={plan.riskSummary} tone={peakTone} peakHiC={peakHiC} />
       {peak && <PeakAlarm peak={peak} />}
+      <HazeSection airQuality={airQuality} />
 
       {/* Mobile / tablet: curve then tabs. */}
       <div className="lg:hidden">
@@ -210,6 +219,43 @@ function PeakAlarm({ peak }: { peak: { start: number; end: number } }) {
           </p>
         </div>
       </div>
+    </Reveal>
+  );
+}
+
+/* ---------------- b2. Haze score ---------------- */
+
+/** Live air-quality readout. Silently hides when no AQI data is present. */
+function HazeSection({ airQuality }: { airQuality?: AirQuality | null }) {
+  if (!airQuality) return null;
+  const band = aqiBandFor(airQuality.aqi);
+  const inkText = band.tone === "caution";
+
+  return (
+    <Reveal className="border-t border-line py-9">
+      <SectionLabel>Haze score</SectionLabel>
+      <div className="mt-2 flex items-end justify-between gap-4">
+        <p
+          className="font-display tnum leading-[0.85] text-ink"
+          style={{ fontSize: "clamp(3rem, 11vw, 5rem)" }}
+        >
+          {Math.round(airQuality.aqi)}
+        </p>
+        <span
+          className="mb-3 inline-flex shrink-0 items-center font-display text-sm uppercase tracking-[0.18em]"
+          style={{
+            backgroundColor: toneHex[band.tone],
+            color: inkText ? "#191512" : "#faf6f0",
+            borderRadius: 4,
+            padding: "6px 12px",
+          }}
+        >
+          {band.label}
+        </span>
+      </div>
+      <p className="mt-3 text-base leading-relaxed text-ink-soft">
+        {band.meaning}
+      </p>
     </Reveal>
   );
 }
