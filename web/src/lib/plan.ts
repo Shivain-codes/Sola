@@ -30,6 +30,8 @@ export async function generatePlan(args: {
   shiftStart: string;
   shiftEnd: string;
   hours: HourlyHeat[];
+  age?: number;
+  customOccupation?: string;
 }): Promise<PlanResult> {
   if (!PLAN_URL) {
     throw new Error(
@@ -42,6 +44,12 @@ export async function generatePlan(args: {
     jobType: args.jobType,
     shiftStart: args.shiftStart,
     shiftEnd: args.shiftEnd,
+    ...(typeof args.age === "number" && Number.isFinite(args.age)
+      ? { age: args.age }
+      : {}),
+    ...(typeof args.customOccupation === "string" && args.customOccupation
+      ? { customOccupation: args.customOccupation }
+      : {}),
     hourly: args.hours.map((h) => ({
       hour: h.hour,
       tempC: Math.round(h.tempC * 10) / 10,

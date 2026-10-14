@@ -29,10 +29,13 @@ const MODEL_ID = "amazon.nova-lite-v1:0";
 const REGION = process.env.AWS_REGION || "us-east-1";
 const bedrock = new BedrockRuntimeClient({ region: REGION });
 
+// CORS on EVERY response. The browser blocks responses without these even when
+// the HTTP status is 200, which surfaces as "Load failed" in fetch().
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Max-Age": "86400",
   "Content-Type": "application/json",
 };
 
@@ -44,8 +47,9 @@ export const handler = async (event) => {
   const method =
     event?.requestContext?.http?.method ?? event?.httpMethod ?? "POST";
 
+  // Preflight — answer immediately with the CORS headers.
   if (method === "OPTIONS") {
-    return { statusCode: 204, headers: CORS, body: "" };
+    return { statusCode: 200, headers: CORS, body: "" };
   }
 
   let input = {};
@@ -57,6 +61,14 @@ export const handler = async (event) => {
 
   const city = str(input.city) || "your city";
   const jobType = str(input.jobType) || "outdoor worker";
+  const customOccupation = str(input.customOccupation);
+  const ageNum = Number(input.age);
+  const age =
+    Number.isFinite(ageNum) && ageNum >= 1 && ageNum <= 120
+      ? Math.round(ageNum)
+      : null;
+  const effectiveJob =
+    jobType === "Other" && customOccupation ? customOccupation : jobType;
   const shiftStart = str(input.shiftStart) || "";
   const shiftEnd = str(input.shiftEnd) || "";
   const hourly = Array.isArray(input.hourly) ? input.hourly : [];
@@ -71,7 +83,8 @@ export const handler = async (event) => {
   try {
     const plan = await generateWithNova({
       city,
-      jobType,
+      jobType: effectiveJob,
+      age,
       shiftStart,
       shiftEnd,
       hourly,
@@ -80,7 +93,7 @@ export const handler = async (event) => {
     return resp(200, { plan, source: "ai" });
   } catch (err) {
     console.error("Bedrock/plan generation failed, using fallback:", err);
-    const plan = fallbackPlan({ jobType, hourly, peak });
+    const plan = fallbackPlan({ jobType: effectiveJob, hourly, peak });
     return resp(200, { plan, source: "fallback" });
   }
 };
@@ -92,6 +105,7 @@ export const handler = async (event) => {
 async function generateWithNova({
   city,
   jobType,
+  age,
   shiftStart,
   shiftEnd,
   hourly,
@@ -109,6 +123,11 @@ async function generateWithNova({
   const userPrompt = [
     `Worker: ${jobType} in ${city}.`,
     `Shift: ${shiftStart || "start"} to ${shiftEnd || "end"}.`,
+    ...(age != null
+      ? [
+          `Worker age: ${age}. Adjust rest and hydration for age-related heat risk — older adults (60+) and young children need more frequent rest and water breaks.`,
+        ]
+      : []),
     ``,
     `Today's hourly heat index for the shift hours only:`,
     table,

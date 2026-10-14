@@ -35,6 +35,35 @@ export function TextField({
   );
 }
 
+export function NumberField({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <label className="block">
+      <span className={labelCls}>{label}</span>
+      <input
+        type="number"
+        inputMode="numeric"
+        min={1}
+        max={120}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        autoComplete="off"
+        className={controlCls}
+      />
+    </label>
+  );
+}
+
 export function SelectField({
   label,
   value,

@@ -14,6 +14,7 @@ import SafetyCard from "./components/SafetyCard";
 import { Button } from "./components/ui/Button";
 import {
   FieldRow,
+  NumberField,
   SelectField,
   TextField,
   TimeField,
@@ -50,6 +51,8 @@ export default function App() {
   const [jobType, setJobType] = useState(JOB_TYPES[0]);
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("17:00");
+  const [age, setAge] = useState("");
+  const [customOccupation, setCustomOccupation] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -126,12 +129,19 @@ export default function App() {
       setPlaceName(geo.name);
       setShiftHours(slice);
 
+      const parsedAge = Number.parseInt(age, 10);
+      const ageOk =
+        Number.isFinite(parsedAge) && parsedAge >= 1 && parsedAge <= 120;
+
       const result = await generatePlan({
         city: geo.name,
         jobType,
         shiftStart: startTime,
         shiftEnd: endTime,
         hours: slice,
+        age: ageOk ? parsedAge : undefined,
+        customOccupation:
+          jobType === "Other" ? customOccupation.trim() : undefined,
       });
       setPlanResult(result);
     } catch (err) {
@@ -187,6 +197,31 @@ export default function App() {
                 value={jobType}
                 onChange={setJobType}
                 options={JOB_TYPES}
+              />
+              <AnimatePresence initial={false}>
+                {jobType === "Other" && (
+                  <motion.div
+                    key="custom-occupation"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={spring}
+                    className="overflow-hidden"
+                  >
+                    <TextField
+                      label="Tell us your occupation"
+                      value={customOccupation}
+                      onChange={setCustomOccupation}
+                      placeholder="e.g. street vendor"
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <NumberField
+                label="Age (optional)"
+                value={age}
+                onChange={setAge}
+                placeholder="e.g. 65"
               />
               <FieldRow>
                 <TimeField
