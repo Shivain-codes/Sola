@@ -25,7 +25,7 @@ import { BandStamp, HeatNumeral } from "./components/ui/Readout";
 import { CloudShader } from "./components/ui/cloud-shader";
 import { TextReveal } from "./components/ui/text-reveal";
 import { skyForAqi } from "./lib/sky";
-import { SiteNav, CtaBand, SiteFooter } from "./components/site/Site";
+import { SiteNav, SiteFooter } from "./components/site/Site";
 import { HowItWorks, WhyItMatters } from "./components/site/Sections";
 
 const JOB_TYPES = [
@@ -409,10 +409,6 @@ export default function App() {
       {/* ---------------- Content sections ---------------- */}
       <HowItWorks />
       <WhyItMatters />
-
-      <div className="mx-auto max-w-6xl px-6">
-        <CtaBand />
-      </div>
 
       <SiteFooter />
       </div>

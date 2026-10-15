@@ -2,8 +2,7 @@ import { useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { spring } from "../ui/motion";
-import { Reveal, RevealGroup, RevealItem } from "../ui/Reveal";
-import { TextRevealInView } from "../ui/text-reveal";
+import { RevealGroup, RevealItem } from "../ui/Reveal";
 
 const SCROLL = (id: string) => (e: React.MouseEvent) => {
   e.preventDefault();
@@ -48,36 +47,6 @@ export function SiteNav() {
         </nav>
       </div>
     </header>
-  );
-}
-
-/* ---------------- Full-bleed CTA band ---------------- */
-
-export function CtaBand() {
-  return (
-    <section
-      className="relative left-1/2 right-1/2 -mx-[50vw] w-screen backdrop-blur-md"
-      style={{ backgroundColor: "rgba(234, 88, 12, 0.88)" }}
-    >
-      <Reveal className="mx-auto flex max-w-6xl flex-col items-start gap-6 px-6 py-16 sm:flex-row sm:items-center sm:justify-between">
-        <TextRevealInView
-          as="p"
-          per="word"
-          preset="fade-in-blur"
-          speedReveal={1.3}
-          className="font-display text-[clamp(1.75rem,5vw,2.75rem)] leading-[1.02] text-ink"
-        >
-          Don't guess the heat. Read it.
-        </TextRevealInView>
-        <a
-          href="#app"
-          onClick={SCROLL("app")}
-          className="shrink-0 rounded-full bg-ink px-7 py-4 font-display text-base text-paper transition-colors hover:bg-[#2a241e]"
-        >
-          Get my plan
-        </a>
-      </Reveal>
-    </section>
   );
 }
 
