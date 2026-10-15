@@ -294,20 +294,18 @@ export default function App() {
           )}
         </AnimatePresence>
 
-        {/* Loading skeleton */}
+        {/* Loading — preload effect while the plan builds */}
         <AnimatePresence>
           {loading && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="mt-12"
+              className="mt-12 flex justify-center"
               aria-busy="true"
               aria-label="Building your safety plan"
             >
-              <div className="skeleton h-5 w-40 rounded-full" />
-              <div className="skeleton mt-5 h-20 w-32 rounded-2xl" />
-              <div className="skeleton mt-6 h-14 w-full rounded-full" />
+              <WeatherCycler />
             </motion.div>
           )}
         </AnimatePresence>
