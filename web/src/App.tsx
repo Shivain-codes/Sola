@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   geocodeCity,
@@ -19,6 +19,7 @@ import {
   TimeField,
 } from "./components/ui/Field";
 import { spring } from "./components/ui/motion";
+import { WeatherCycler } from "./components/ui/HeatPanelSkeleton";
 import { SolaPreloader } from "./components/ui/SolaPreloader";
 import { CloudShader } from "./components/ui/cloud-shader";
 import { TextReveal } from "./components/ui/text-reveal";
@@ -47,6 +48,40 @@ export default function App() {
   const [shiftHours, setShiftHours] = useState<HourlyHeat[]>([]);
   const [planResult, setPlanResult] = useState<PlanResult | null>(null);
   const [airQuality, setAirQuality] = useState<AirQuality | null>(null);
+
+  // Live temperature: debounced feels-like for the typed city, shown with
+  // the preload effect while it calculates.
+  const [liveTemp, setLiveTemp] = useState<{ place: string; hiC: number } | null>(null);
+  const [liveTempLoading, setLiveTempLoading] = useState(false);
+  const liveTempReq = useRef(0);
+
+  useEffect(() => {
+    const q = city.trim();
+    if (q.length < 3) {
+      setLiveTemp(null);
+      setLiveTempLoading(false);
+      return;
+    }
+    const reqId = ++liveTempReq.current;
+    setLiveTempLoading(true);
+    const t = setTimeout(async () => {
+      try {
+        const geo = await geocodeCity(q);
+        const hourly = await fetchHourlyHeat(geo.lat, geo.lon);
+        if (reqId !== liveTempReq.current) return;
+        const nowHour = new Date().getHours();
+        const current =
+          hourly.find((h) => h.hour === nowHour) ?? hourly[hourly.length - 1];
+        setLiveTemp({ place: geo.name, hiC: current.hiC });
+      } catch {
+        if (reqId !== liveTempReq.current) return;
+        setLiveTemp(null);
+      } finally {
+        if (reqId === liveTempReq.current) setLiveTempLoading(false);
+      }
+    }, 550);
+    return () => clearTimeout(t);
+  }, [city]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -173,6 +208,21 @@ export default function App() {
                 onChange={setCity}
                 placeholder="e.g. Delhi"
               />
+              {/* Live temperature preload effect — calculates the current
+                  feels-like as the city is typed. */}
+              <div className="-mt-3 min-h-6" aria-live="polite">
+                {liveTempLoading ? (
+                  <WeatherCycler compact />
+                ) : liveTemp ? (
+                  <p className="text-sm text-ink-soft">
+                    Feels like{" "}
+                    <span className="font-display text-xl text-ink">
+                      {Math.round(liveTemp.hiC)}°
+                    </span>{" "}
+                    in {liveTemp.place} right now.
+                  </p>
+                ) : null}
+              </div>
               <SelectField
                 label="Job type"
                 value={jobType}

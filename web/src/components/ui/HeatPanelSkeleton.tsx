@@ -14,7 +14,13 @@ const WORDS = [
   "Checking the haze",
 ];
 
-export function WeatherCycler({ intervalMs = 380 }: { intervalMs?: number }) {
+export function WeatherCycler({
+  intervalMs = 380,
+  compact = false,
+}: {
+  intervalMs?: number;
+  compact?: boolean;
+}) {
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
@@ -26,25 +32,33 @@ export function WeatherCycler({ intervalMs = 380 }: { intervalMs?: number }) {
 
   return (
     <div
-      className="relative mt-2 flex h-[clamp(4rem,12vw,7rem)] items-center overflow-hidden"
+      className={
+        compact
+          ? "relative flex h-6 items-center overflow-hidden"
+          : "relative mt-2 flex h-[clamp(4rem,12vw,7rem)] items-center overflow-hidden"
+      }
       aria-label="Reading the weather"
     >
       <AnimatePresence mode="popLayout" initial={false}>
         <motion.div
           key={index}
-          className="absolute flex items-center gap-3 font-display text-ink"
-          style={{ fontSize: "clamp(2rem, 6.5vw, 3.75rem)" }}
+          className="absolute flex items-center gap-2 font-display text-ink-soft"
+          style={
+            compact
+              ? { fontSize: "0.875rem" }
+              : { fontSize: "clamp(2rem, 6.5vw, 3.75rem)" }
+          }
           aria-hidden={false}
-          initial={{ y: 26, opacity: 0 }}
+          initial={{ y: 14, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          exit={{ y: -34, opacity: 0 }}
+          exit={{ y: -18, opacity: 0 }}
           transition={{ duration: 0.22, ease: "easeOut" }}
         >
           <span
-            className="h-2.5 w-2.5 shrink-0 rounded-full bg-ink"
+            className={`shrink-0 rounded-full bg-ink-soft ${compact ? "h-1.5 w-1.5" : "h-2.5 w-2.5"}`}
             aria-hidden="true"
           />
-          {WORDS[index]}
+          {WORDS[index]}…
         </motion.div>
       </AnimatePresence>
     </div>
