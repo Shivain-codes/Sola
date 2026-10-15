@@ -5,7 +5,7 @@ const labelCls =
   "block text-xs font-medium uppercase tracking-[0.14em] text-ink-soft";
 
 const controlCls =
-  "mt-2 w-full rounded-full border border-line bg-paper px-5 py-3.5 text-base text-ink " +
+  "mt-2 w-full rounded-full border border-line bg-paper/70 backdrop-blur-md px-5 py-3.5 text-base text-ink " +
   "placeholder:text-ink-soft/50 transition-colors focus:border-ink focus:outline-none";
 
 export function TextField({

@@ -1,5 +1,6 @@
 import { Droplets, HeartPulse, ShieldCheck } from "lucide-react";
 import { Reveal, RevealGroup, RevealItem } from "../ui/Reveal";
+import { TextRevealInView } from "../ui/text-reveal";
 
 /* ---------------- How it works ---------------- */
 
@@ -32,9 +33,14 @@ export function HowItWorks() {
               {s.n}
             </span>
             <div className="sm:flex sm:flex-1 sm:items-baseline sm:justify-between sm:gap-8">
-              <h3 className="font-display text-2xl leading-tight text-ink">
+              <TextRevealInView
+                as="h3"
+                per="word"
+                preset="fade"
+                className="font-display text-2xl leading-tight text-ink"
+              >
                 {s.title}
-              </h3>
+              </TextRevealInView>
               <p className="mt-1 max-w-sm text-base leading-relaxed text-ink-soft sm:mt-0 sm:text-right">
                 {s.copy}
               </p>
@@ -79,12 +85,17 @@ export function WhyItMatters() {
         {cards.map((c) => (
           <RevealItem
             key={c.title}
-            className="flex flex-col rounded-2xl border border-line bg-paper p-7"
+            className="flex flex-col rounded-2xl border border-line bg-paper/55 p-7 backdrop-blur-xl"
           >
             <c.icon size={24} strokeWidth={1.75} color="#EA580C" />
-            <h3 className="mt-5 font-display text-xl leading-tight text-ink">
+            <TextRevealInView
+              as="h3"
+              per="word"
+              preset="fade"
+              className="mt-5 font-display text-xl leading-tight text-ink"
+            >
               {c.title}
-            </h3>
+            </TextRevealInView>
             <p className="mt-2 text-[15px] leading-relaxed text-ink-soft">
               {c.copy}
             </p>

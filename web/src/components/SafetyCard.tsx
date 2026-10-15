@@ -27,6 +27,8 @@ type Props = {
   hours: HourlyHeat[];
   airQuality?: AirQuality | null;
   cityName: string;
+  /** Worker's age (optional) — sharpens hydration/rest guidance for 60+. */
+  age?: number;
 };
 
 /* ------------------------------------------------------------------ */
@@ -45,6 +47,7 @@ export default function SafetyCard({
   hours,
   airQuality,
   cityName,
+  age,
 }: Props) {
   if (hours.length === 0) return null;
 
@@ -56,9 +59,7 @@ export default function SafetyCard({
   const lo = Math.min(...his);
   const band = bandFor(nowHi);
   const blocks = buildBlocks(hours);
-  const guide = guidanceFor(hi);
-  const nowUv = nowIdx >= 0 ? hours[nowIdx].uv : hours[0].uv;
-  const nowRh = nowIdx >= 0 ? hours[nowIdx].humidity : hours[0].humidity;
+  const guide = guidanceFor(hi, age);
 
   return (
     <div className="flex flex-col gap-3">
@@ -87,23 +88,9 @@ export default function SafetyCard({
             ))}
           </ul>
         </Module>
-        <Module
-          label="UV index"
-          icon={Sun}
-          value={nowUv == null ? "–" : String(Math.round(nowUv))}
-          caption={nowUv == null ? "Not available" : uvCategory(nowUv)}
-        >
-          {nowUv != null && <UvScale uv={nowUv} />}
-        </Module>
-        <Module
-          label="Humidity"
-          icon={Droplets}
-          value={`${Math.round(nowRh)}%`}
-          caption={nowRh >= 70 ? "Sweat cools you slower" : nowRh >= 40 ? "Moderate mugginess" : "Dry air"}
-        />
         {airQuality && (
           <Module
-            label="Air quality"
+            label="Haze score"
             icon={Wind}
             value={String(Math.round(airQuality.aqi))}
             caption={aqiBandFor(airQuality.aqi).label}
@@ -112,7 +99,6 @@ export default function SafetyCard({
           </Module>
         )}
       </SiteReveal>
-
       <Card>
         <CardLabel>Your plan</CardLabel>
         <div className="mt-3 flex flex-col gap-2">
@@ -382,18 +368,6 @@ function NeedScale({ level }: { level: number }) {
   );
 }
 
-function UvScale({ uv }: { uv: number }) {
-  const pct = Math.min(100, Math.max(0, (uv / 11) * 100));
-  return (
-    <div className="relative h-[6px] rounded-full" style={{ background: UV_GRADIENT }}>
-      <div
-        className="absolute top-1/2 h-[14px] w-[14px] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-paper bg-ink shadow"
-        style={{ left: `${pct}%` }}
-      />
-    </div>
-  );
-}
-
 function AqiScale({ aqi }: { aqi: number }) {
   const pct = Math.min(100, Math.max(0, (aqi / 300) * 100));
   return (
@@ -413,14 +387,6 @@ function bandIcon(tone: HeatTone): LucideIcon {
   if (tone === "hot") return Sun;
   if (tone === "caution") return CloudSun;
   return Thermometer; // safe
-}
-
-function uvCategory(uv: number): string {
-  if (uv < 3) return "Low";
-  if (uv < 6) return "Moderate";
-  if (uv < 8) return "High";
-  if (uv < 11) return "Very high";
-  return "Extreme";
 }
 
 type Tier = "work" | "caution" | "danger";
@@ -468,16 +434,40 @@ function buildBlocks(hours: HourlyHeat[]): Block[] {
   return blocks;
 }
 
-/** Rules-based hydration/rest guidance from the shift's peak heat index. */
-function guidanceFor(peakHiC: number): {
+/**
+ * Rules-based hydration/rest guidance from the shift's peak heat index.
+ * Workers 60+ get one urgency tier bump — older adults dehydrate faster
+ * and feel heat stress sooner, so water/rest come more often.
+ */
+function guidanceFor(
+  peakHiC: number,
+  age?: number
+): {
   waterEvery: string;
   restLen: string;
   restEvery: string;
   level: number;
 } {
-  if (peakHiC >= 39)
-    return { waterEvery: "Every 15 min", restLen: "15 min", restEvery: "Shade break every 30 min", level: 0.92 };
-  if (peakHiC >= 32)
-    return { waterEvery: "Every 20 min", restLen: "10 min", restEvery: "Shade break every hour", level: 0.6 };
-  return { waterEvery: "Every 30 min", restLen: "Short breaks", restEvery: "Rest in shade as needed", level: 0.3 };
+  const senior = age != null && age >= 60;
+  const hi = senior ? peakHiC + 4 : peakHiC;
+  if (hi >= 39)
+    return {
+      waterEvery: "Every 15 min",
+      restLen: "15 min",
+      restEvery: senior ? "Shade break every 20 min" : "Shade break every 30 min",
+      level: 0.92,
+    };
+  if (hi >= 32)
+    return {
+      waterEvery: senior ? "Every 15 min" : "Every 20 min",
+      restLen: "10 min",
+      restEvery: senior ? "Shade break every 30 min" : "Shade break every hour",
+      level: 0.6,
+    };
+  return {
+    waterEvery: "Every 30 min",
+    restLen: "Short breaks",
+    restEvery: "Rest in shade as needed",
+    level: 0.3,
+  };
 }

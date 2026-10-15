@@ -23,6 +23,7 @@ import { spring } from "./components/ui/motion";
 import { HeatTrace } from "./components/ui/HeatTrace";
 import { BandStamp, HeatNumeral } from "./components/ui/Readout";
 import { CloudShader } from "./components/ui/cloud-shader";
+import { TextReveal } from "./components/ui/text-reveal";
 import { skyForAqi } from "./lib/sky";
 import { SiteNav, CtaBand, SiteFooter } from "./components/site/Site";
 import { HowItWorks, WhyItMatters } from "./components/site/Sections";
@@ -149,6 +150,7 @@ export default function App() {
         age: ageOk ? parsedAge : undefined,
         customOccupation:
           jobType === "Other" ? customOccupation.trim() : undefined,
+        aqi: airQuality?.aqi ?? undefined,
       });
       setPlanResult(result);
     } catch (err) {
@@ -199,9 +201,15 @@ export default function App() {
             <p className="text-xs font-medium uppercase tracking-[0.2em] text-ink-soft">
               Heat safety for outdoor workers
             </p>
-            <h1 className="mt-4 font-display text-[clamp(2.75rem,7vw,4.5rem)] leading-[0.98] text-ink">
+            <TextReveal
+              as="h1"
+              per="word"
+              preset="fade-in-blur"
+              speedReveal={1.4}
+              className="mt-4 font-display text-[clamp(2.75rem,7vw,4.5rem)] leading-[0.98] text-ink"
+            >
               Know when the heat turns dangerous.
-            </h1>
+            </TextReveal>
             <p className="mt-5 max-w-md text-lg leading-relaxed text-ink-soft">
               Sola reads today's feels-like temperature for your city and shift,
               then tells you when to work, rest, and drink — in plain words.
@@ -275,7 +283,7 @@ export default function App() {
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ ...spring, delay: 0.08 }}
-            className="rounded-2xl border border-line p-7 lg:p-9"
+            className="rounded-2xl border border-line bg-paper/55 p-7 backdrop-blur-xl lg:p-9"
           >
             <div className="flex items-end justify-between gap-4">
               <div className="min-w-0">
@@ -389,6 +397,10 @@ export default function App() {
               hours={shiftHours}
               airQuality={airQuality}
               cityName={placeName ?? city}
+              age={(() => {
+                const n = Number.parseInt(age, 10);
+                return Number.isFinite(n) && n >= 1 && n <= 120 ? n : undefined;
+              })()}
             />
           </div>
         )}

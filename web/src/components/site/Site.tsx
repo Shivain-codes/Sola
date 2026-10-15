@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { spring } from "../ui/motion";
 import { Reveal, RevealGroup, RevealItem } from "../ui/Reveal";
+import { TextRevealInView } from "../ui/text-reveal";
 
 const SCROLL = (id: string) => (e: React.MouseEvent) => {
   e.preventDefault();
@@ -55,13 +56,19 @@ export function SiteNav() {
 export function CtaBand() {
   return (
     <section
-      className="relative left-1/2 right-1/2 -mx-[50vw] w-screen"
-      style={{ backgroundColor: "#EA580C" }}
+      className="relative left-1/2 right-1/2 -mx-[50vw] w-screen backdrop-blur-md"
+      style={{ backgroundColor: "rgba(234, 88, 12, 0.88)" }}
     >
       <Reveal className="mx-auto flex max-w-6xl flex-col items-start gap-6 px-6 py-16 sm:flex-row sm:items-center sm:justify-between">
-        <p className="font-display text-[clamp(1.75rem,5vw,2.75rem)] leading-[1.02] text-ink">
+        <TextRevealInView
+          as="p"
+          per="word"
+          preset="fade-in-blur"
+          speedReveal={1.3}
+          className="font-display text-[clamp(1.75rem,5vw,2.75rem)] leading-[1.02] text-ink"
+        >
           Don't guess the heat. Read it.
-        </p>
+        </TextRevealInView>
         <a
           href="#app"
           onClick={SCROLL("app")}

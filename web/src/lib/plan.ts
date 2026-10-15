@@ -32,6 +32,8 @@ export async function generatePlan(args: {
   hours: HourlyHeat[];
   age?: number;
   customOccupation?: string;
+  /** US AQI at plan time (optional) — lets the plan mention haze. */
+  aqi?: number;
 }): Promise<PlanResult> {
   if (!PLAN_URL) {
     throw new Error(
@@ -49,6 +51,9 @@ export async function generatePlan(args: {
       : {}),
     ...(typeof args.customOccupation === "string" && args.customOccupation
       ? { customOccupation: args.customOccupation }
+      : {}),
+    ...(typeof args.aqi === "number" && Number.isFinite(args.aqi)
+      ? { aqi: Math.round(args.aqi) }
       : {}),
     hourly: args.hours.map((h) => ({
       hour: h.hour,

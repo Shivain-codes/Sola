@@ -1,7 +1,7 @@
 // Sola — generatePlan Lambda (Function URL, no API Gateway). Node 20 runtime.
 //
 // Request (POST JSON):
-//   { city, jobType, shiftStart, shiftEnd,
+//   { city, jobType, shiftStart, shiftEnd, age?, customOccupation?, aqi?,
 //     hourly: [{ hour, tempC, humidity, heatIndexC, band }] }
 //
 // Response (200 JSON):
@@ -77,6 +77,11 @@ export const handler = async (event) => {
   const shiftStart = str(input.shiftStart) || "";
   const shiftEnd = str(input.shiftEnd) || "";
   const hourly = Array.isArray(input.hourly) ? input.hourly : [];
+  const aqiNum = Number(input.aqi);
+  const aqi =
+    Number.isFinite(aqiNum) && aqiNum >= 0 && aqiNum <= 500
+      ? Math.round(aqiNum)
+      : null;
 
   if (hourly.length === 0) {
     return resp(400, { error: "No hourly heat data provided." });
@@ -94,11 +99,12 @@ export const handler = async (event) => {
       shiftEnd,
       hourly,
       peak,
+      aqi,
     });
     return resp(200, { plan, source: "ai" });
   } catch (err) {
     console.error("Bedrock/plan generation failed, using fallback:", err);
-    const plan = fallbackPlan({ jobType: effectiveJob, hourly, peak });
+    const plan = fallbackPlan({ jobType: effectiveJob, hourly, peak, age, aqi });
     return resp(200, { plan, source: "fallback" });
   }
 };
@@ -115,6 +121,7 @@ async function generateWithNova({
   shiftEnd,
   hourly,
   peak,
+  aqi,
 }) {
   const table = hourly
     .map(
@@ -125,14 +132,25 @@ async function generateWithNova({
     )
     .join("\n");
 
+  const hazeLine =
+    aqi == null
+      ? `Haze: no air-quality data.`
+      : `Haze: US AQI ${aqi} (${aqiLabel(aqi)}).`;
+
+  const ageLine =
+    age == null
+      ? `Worker age: not given.`
+      : age >= 60
+        ? `Worker age: ${age}. Older adults overheat faster, feel thirst late, and are at higher heatstroke risk.`
+        : age < 18
+          ? `Worker age: ${age}. Young workers need extra water reminders and shade breaks.`
+          : `Worker age: ${age}.`;
+
   const userPrompt = [
     `Worker: ${jobType} in ${city}.`,
     `Shift: ${shiftStart || "start"} to ${shiftEnd || "end"}.`,
-    ...(age != null
-      ? [
-          `Worker age: ${age}. Adjust rest and hydration for age-related heat risk — older adults (60+) and young children need more frequent rest and water breaks.`,
-        ]
-      : []),
+    ageLine,
+    hazeLine,
     ``,
     `Today's hourly heat index for the shift hours only:`,
     table,
@@ -143,8 +161,8 @@ async function generateWithNova({
         )} (feels up to ${Math.round(peak.maxHiC)}C).`
       : `No extreme peak today, but stay careful.`,
     ``,
-    `Write a heat-safety plan. Return ONLY valid JSON (no markdown, no code`,
-    `fences) with exactly this shape:`,
+    `Write a heat-safety plan for THIS worker. Return ONLY valid JSON (no`,
+    `markdown, no code fences) with exactly this shape:`,
     `{`,
     `  "riskSummary": ["line 1", "line 2"],`,
     `  "timeline": [{"label":"9am-11am","action":"Work","note":"short note"}],`,
@@ -152,31 +170,45 @@ async function generateWithNova({
     `  "ifSymptoms": ["step 1","step 2","step 3"]`,
     `}`,
     `Rules:`,
-    `- riskSummary: exactly 2 short lines. The FIRST line MUST name the worker's`,
-    `  job ("${jobType}") so the advice feels written for them, e.g. start it with`,
-    `  "As a ${jobType}, ...".`,
-    `- timeline: one block per 1-2 shift hours. action is Work, Rest, or Hydrate.`,
-    `  Tell them to rest and hydrate during the hottest blocks. EVERY block must`,
-    `  have a short, non-empty note — never leave a note blank.`,
-    ...(age != null
-      ? [
-          `- The worker is ${age}. Make the schedule visibly age-aware: schedule`,
-          `  MORE frequent Rest/Hydrate blocks than usual. Mention the age reason in`,
-          `  the SECOND riskSummary line and in ONE or TWO timeline notes only (e.g.`,
-          `  "At ${age}, take a short break every 30 min"). Keep the other timeline`,
-          `  notes specific to that hour — do NOT repeat the same age sentence in`,
-          `  every block.`,
-        ]
-      : []),
+    `- riskSummary: exactly 2 short lines, plain words, no jargon.`,
+    `- Line 1 MUST start with "As a ${jobType}," and include the city, the`,
+    `  peak feels-like temperature, and the peak window hours.`,
+    `- Line 2 MUST give the single most important action for THIS worker.`,
+    age != null && age >= 60
+      ? `- The worker is ${age}: mention the age reason here (older adults ` +
+        `overheat faster).`
+      : null,
+    aqi != null && aqi > 150
+      ? `- Haze is unhealthy (AQI ${aqi}): line 2 must also tell them to wear ` +
+        `a mask outdoors.`
+      : null,
+    `- timeline: cover the FULL shift (${shiftStart || "start"} to ` +
+      `${shiftEnd || "end"}), one block per 1-2 hours. action is Work, Rest, or Hydrate.`,
+    `- EVERY timeline note must be specific to that block: cite the feels-like`,
+    `  temperature for those hours and say exactly what to do. Never write`,
+    `  generic filler like "drink water regularly".`,
+    `- During the peak window, schedule Rest blocks in shade.`,
+    age != null && age >= 60
+      ? `- The worker is ${age}: schedule a Rest or Hydrate block at least ` +
+        `every hour, and say the age reason plainly in 2-3 notes (e.g. "At ` +
+        `${age}, rest even if you feel fine — heat hits faster"). Do NOT repeat ` +
+        `the same sentence in every block.`
+      : null,
+    aqi != null && aqi > 150
+      ? `- Haze is unhealthy (AQI ${aqi}): add mask/breathing advice in one ` +
+        `timeline note.`
+      : null,
     `- warningSigns: exactly 5 heatstroke warning signs, plain words.`,
     `- ifSymptoms: what to do if symptoms appear. Short steps.`,
     `- No text outside the JSON.`,
-  ].join("\n");
+  ]
+    .filter((l) => l !== null)
+    .join("\n");
 
   const payload = {
     system: [{ text: SYSTEM_PROMPT }],
     messages: [{ role: "user", content: [{ text: userPrompt }] }],
-    inferenceConfig: { maxTokens: 900, temperature: 0.3, topP: 0.9 },
+    inferenceConfig: { maxTokens: 1400, temperature: 0.4, topP: 0.9 },
   };
 
   const command = new InvokeModelCommand({
@@ -241,34 +273,50 @@ function parsePlan(text) {
 // Fallback — deterministic plan built from the bands. Never a blank screen.
 // ---------------------------------------------------------------------------
 
-function fallbackPlan({ jobType, hourly, peak }) {
+function fallbackPlan({ jobType, hourly, peak, age, aqi }) {
   const maxHi = Math.max(...hourly.map((h) => h.heatIndexC));
   const worstBand = bandForC(maxHi);
+  const senior = age != null && age >= 60;
 
   const riskSummary = [
-    `Today feels up to ${Math.round(maxHi)}°C for a ${jobType.toLowerCase()}.`,
+    `As a ${jobType.toLowerCase()}, today feels up to ${Math.round(
+      maxHi
+    )}°C in the hottest hours.`,
     peak
       ? `Hottest from ${hourLabel(peak.startHour)} to ${hourLabel(
           peak.endHour
-        )}. Plan rest then.`
+        )}. Rest in shade then.`
       : `Stay hydrated and take breaks in the shade.`,
   ];
+  if (senior) {
+    riskSummary[1] += ` At ${age}, take breaks even before you feel tired.`;
+  }
+  if (aqi != null && aqi > 150) {
+    riskSummary[1] += ` Haze is unhealthy (AQI ${aqi}) — wear a mask outdoors.`;
+  }
 
   const timeline = hourly.map((h) => {
     const b = bandForC(h.heatIndexC);
     let action = "Work";
-    let note = "Drink water regularly.";
+    let note = `Feels ${Math.round(h.heatIndexC)}°C. Drink water.`;
     if (h.heatIndexC >= 39) {
       action = "Rest";
-      note = "Too hot. Rest in shade. Sip water often.";
+      note = `Feels ${Math.round(
+        h.heatIndexC
+      )}°C — too hot. Rest in shade. Sip water often.`;
     } else if (h.heatIndexC >= 32) {
       action = "Hydrate";
-      note = "Slow down. Drink water every 15–20 min. Find shade.";
+      note = `Feels ${Math.round(
+        h.heatIndexC
+      )}°C. Slow down. Drink water every 15–20 min. Find shade.`;
+    }
+    if (senior && (action === "Work" || action === "Hydrate")) {
+      note += ` At ${age}, rest even if you feel fine.`;
     }
     return {
       label: hourLabel(h.hour),
       action,
-      note: `Feels ${Math.round(h.heatIndexC)}°C (${b.label}). ${note}`,
+      note: `${b.label}. ${note}`,
     };
   });
 
@@ -329,6 +377,16 @@ function bandForC(hiC) {
   if (hiC >= 32) return { label: "Extreme caution" };
   if (hiC >= 27) return { label: "Caution" };
   return { label: "Safe" };
+}
+
+/** Short US-AQI category for prompt context. */
+function aqiLabel(aqi) {
+  if (aqi <= 50) return "Good";
+  if (aqi <= 100) return "Moderate";
+  if (aqi <= 150) return "Unhealthy for Sensitive Groups";
+  if (aqi <= 200) return "Unhealthy";
+  if (aqi <= 300) return "Very Unhealthy";
+  return "Hazardous";
 }
 
 function hourLabel(hour) {
