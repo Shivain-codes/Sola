@@ -11,6 +11,8 @@ export type HourlyHeat = {
   humidity: number;
   /** Computed heat index in °C. */
   hiC: number;
+  /** UV index at that hour (null when unavailable). */
+  uv: number | null;
 };
 
 /** Semantic danger tone — the only accent system in the UI. */
@@ -57,13 +59,14 @@ export async function fetchHourlyHeat(
 ): Promise<HourlyHeat[]> {
   const url =
     `${FORECAST_URL}?latitude=${lat}&longitude=${lon}` +
-    `&hourly=temperature_2m,relative_humidity_2m&forecast_days=1&timezone=auto`;
+    `&hourly=temperature_2m,relative_humidity_2m,uv_index&forecast_days=1&timezone=auto`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Weather fetch failed (${res.status})`);
   const data = await res.json();
   const times: string[] = data?.hourly?.time ?? [];
   const temps: number[] = data?.hourly?.temperature_2m ?? [];
   const rhs: number[] = data?.hourly?.relative_humidity_2m ?? [];
+  const uvs: (number | null)[] = data?.hourly?.uv_index ?? [];
 
   return times.map((time, i) => {
     const tempC = temps[i];
@@ -75,6 +78,7 @@ export async function fetchHourlyHeat(
       tempC,
       humidity,
       hiC: heatIndex(tempC, humidity),
+      uv: typeof uvs[i] === "number" ? uvs[i] : null,
     };
   });
 }

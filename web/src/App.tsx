@@ -384,6 +384,7 @@ export default function App() {
               source={planResult.source}
               hours={shiftHours}
               airQuality={airQuality}
+              cityName={placeName ?? city}
             />
           </div>
         )}
