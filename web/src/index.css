@@ -18,6 +18,12 @@
   --color-d-caution: #ca8a04;
   --color-d-hot: #ea580c;
   --color-d-danger: #dc2626;
+
+  /* shadcn theme tokens, mapped to Sola's exact palette */
+  --color-background: #faf6f0;
+  --color-foreground: #191512;
+  --color-muted: #e8dfd3;
+  --color-muted-foreground: #6b5f52;
 }
 
 @layer base {

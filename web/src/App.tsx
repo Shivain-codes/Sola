@@ -26,6 +26,7 @@ import { TextReveal } from "./components/ui/text-reveal";
 import { skyForAqi } from "./lib/sky";
 import { SiteNav, CtaBand, SiteFooter } from "./components/site/Site";
 import { HowItWorks, WhyItMatters } from "./components/site/Sections";
+import HazeWheel from "./components/HazeWheel";
 
 const JOB_TYPES = [
   "Delivery rider",
@@ -343,6 +344,7 @@ export default function App() {
       </section>
 
       {/* ---------------- Content sections ---------------- */}
+      <HazeWheel />
       <HowItWorks />
       <WhyItMatters />
 
