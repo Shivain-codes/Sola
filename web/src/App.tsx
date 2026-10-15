@@ -173,7 +173,22 @@ export default function App() {
 
       {/* ---------------- Hero ---------------- */}
       <section className="mx-auto max-w-6xl px-6 pt-16 lg:pt-24">
-        <div className="grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
+        {/* Sky band — haze-reactive background for the whole hero */}
+        <div className="relative -mx-6 -mt-16 px-6 pb-12 pt-16 lg:-mt-24 lg:pt-24">
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+            <CloudShader
+              className="absolute inset-0"
+              speed={0.6}
+              count={sky.count}
+              cloudColor={sky.cloudColor}
+              skyTopColor={sky.skyTopColor}
+              skyBottomColor={sky.skyBottomColor}
+            />
+            {/* soften the top/bottom edges into the paper background */}
+            <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-paper to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-paper to-transparent" />
+          </div>
+          <div className="relative z-10 grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
           {/* Left — message + form */}
           <motion.div
             initial={{ opacity: 0, y: 18 }}
@@ -254,24 +269,13 @@ export default function App() {
             </form>
           </motion.div>
 
-          {/* Right — live instrument readout panel, sky reacts to haze */}
+          {/* Right — live instrument readout panel */}
           <motion.aside
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ ...spring, delay: 0.08 }}
-            className="relative overflow-hidden rounded-2xl border border-line p-7 lg:p-9"
+            className="rounded-2xl border border-line p-7 lg:p-9"
           >
-            <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-              <CloudShader
-                className="absolute inset-0"
-                speed={0.6}
-                count={sky.count}
-                cloudColor={sky.cloudColor}
-                skyTopColor={sky.skyTopColor}
-                skyBottomColor={sky.skyBottomColor}
-              />
-            </div>
-            <div className="relative z-10">
             <div className="flex items-end justify-between gap-4">
               <div className="min-w-0">
                 <p className="text-xs font-medium uppercase tracking-[0.18em] text-ink-soft">
@@ -322,8 +326,8 @@ export default function App() {
                 <div className="skeleton mt-3 h-[120px] w-full rounded-xl" />
               )}
             </div>
-            </div>
           </motion.aside>
+        </div>
         </div>
 
         {/* Error */}
