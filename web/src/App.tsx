@@ -246,11 +246,10 @@ export default function App() {
                 {jobType === "Other" && (
                   <motion.div
                     key="custom-occupation"
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={spring}
-                    className="overflow-hidden"
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.18, ease: "easeOut" }}
                   >
                     <TextField
                       label="Tell us your occupation"

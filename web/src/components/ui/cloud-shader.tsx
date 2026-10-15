@@ -258,7 +258,11 @@ export const CloudShader = ({
     if (!canvas) return;
 
     const gl = canvas.getContext("webgl", {
-      alpha: false,
+      // Transparent canvas: if the GL context is ever cleared or lost
+      // (e.g. on resize or a GPU hiccup), the CSS sky gradient behind this
+      // canvas shows through instead of a black frame. The shader outputs
+      // alpha 1.0, so normal rendering is pixel-identical.
+      alpha: true,
       antialias: false,
       premultipliedAlpha: false,
       // Keep the drawing buffer so full-page screenshot captures never read
@@ -343,9 +347,19 @@ export const CloudShader = ({
 
     frame = requestAnimationFrame(draw);
 
+    // If the GPU context is lost, stop drawing on the dead context. The
+    // canvas is transparent, so the CSS sky gradient behind it remains.
+    const onContextLost = (e: Event) => {
+      e.preventDefault();
+      running = false;
+      cancelAnimationFrame(frame);
+    };
+    canvas.addEventListener("webglcontextlost", onContextLost);
+
     return () => {
       running = false;
       cancelAnimationFrame(frame);
+      canvas.removeEventListener("webglcontextlost", onContextLost);
       observer.disconnect();
       gl.deleteBuffer(buffer);
       gl.deleteProgram(program);
