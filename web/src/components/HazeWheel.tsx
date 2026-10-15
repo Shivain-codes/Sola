@@ -77,6 +77,8 @@ async function searchCommons(
       .replace(/\.[a-z0-9]+$/i, "")
       .replace(/_/g, " ")
       .replace(/\s*\([\d\s]+\)/g, "")
+      .replace(/\s*\b\d{8}\b\s*\b\d{6}\b/g, "")
+      .replace(/\s{2,}/g, " ")
       .trim()
       .slice(0, 42);
     items.push({ title, image: info.thumburl, href: info.descriptionurl });
@@ -105,8 +107,11 @@ function useHazeImages(location: string): WorksWheelItem[] {
         const matched = [...haze, ...smog].filter((it) => {
           if (seen.has(it.image)) return false;
           seen.add(it.image);
-          // Only this location — nothing else.
-          return it.title.toLowerCase().includes(key);
+          const t = it.title.toLowerCase();
+          // Only this location — nothing else — and genuinely haze/smog.
+          return (
+            t.includes(key) && (t.includes("haze") || t.includes("smog"))
+          );
         });
         if (matched.length >= 3) setItems(matched.slice(0, 10));
       } catch {
@@ -137,10 +142,6 @@ export default function HazeWheel({ city }: { city: string }) {
         <h2 className="mt-3 font-display text-[clamp(1.8rem,4.5vw,2.75rem)] leading-tight text-ink">
           This is what the haze looks like over {location}.
         </h2>
-        <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-ink-soft">
-          Real skies from real haze days — scroll to turn the wheel. Images via
-          Wikimedia Commons.
-        </p>
       </Reveal>
       <Reveal className="mt-8">
         <div className="h-[68vh] min-h-[480px] w-full">

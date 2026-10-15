@@ -34,8 +34,8 @@ export function WeatherCycler({
     <div
       className={
         compact
-          ? "relative flex h-6 items-center overflow-hidden"
-          : "relative mt-2 flex h-[clamp(4rem,12vw,7rem)] items-center overflow-hidden"
+          ? "relative flex h-6 w-full items-center overflow-hidden"
+          : "relative mt-2 flex h-[clamp(4rem,12vw,7rem)] w-full items-center justify-center overflow-hidden"
       }
       aria-label="Reading the weather"
     >
