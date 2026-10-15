@@ -344,7 +344,7 @@ export default function App() {
       </section>
 
       {/* ---------------- Content sections ---------------- */}
-      <HazeWheel />
+      <HazeWheel city={city} />
       <HowItWorks />
       <WhyItMatters />
 
