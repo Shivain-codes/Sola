@@ -22,6 +22,8 @@ import {
 import { spring } from "./components/ui/motion";
 import { HeatTrace } from "./components/ui/HeatTrace";
 import { BandStamp, HeatNumeral } from "./components/ui/Readout";
+import { CloudShader } from "./components/ui/cloud-shader";
+import { skyForAqi } from "./lib/sky";
 import { SiteNav, CtaBand, SiteFooter } from "./components/site/Site";
 import { HowItWorks, WhyItMatters } from "./components/site/Sections";
 
@@ -63,6 +65,7 @@ export default function App() {
 
   const [gauge, setGauge] = useState<Gauge>(null);
   const [gaugeLoading, setGaugeLoading] = useState(false);
+  const [gaugeAqi, setGaugeAqi] = useState<number | null>(null);
   const gaugeReq = useRef(0);
 
   // Debounced live readout: current heat index + today's full curve.
@@ -70,6 +73,7 @@ export default function App() {
     const q = city.trim();
     if (q.length < 3) {
       setGauge(null);
+      setGaugeAqi(null);
       setGaugeLoading(false);
       return;
     }
@@ -79,6 +83,9 @@ export default function App() {
       try {
         const geo = await geocodeCity(q);
         const hourly = await fetchHourlyHeat(geo.lat, geo.lon);
+        const aq = await fetchAirQuality(geo.lat, geo.lon).catch(() => null);
+        if (reqId !== gaugeReq.current) return;
+        setGaugeAqi(aq?.aqi ?? null);
         const nowHour = new Date().getHours();
         const current =
           hourly.find((h) => h.hour === nowHour) ?? hourly[hourly.length - 1];
@@ -155,6 +162,10 @@ export default function App() {
 
   const hasPlan = planResult && shiftHours.length > 0;
   const gaugeTone = gauge ? bandFor(gauge.hiC).tone : null;
+
+  // Sky behind the hero instrument panel follows the haze: the submitted
+  // plan's AQI wins, otherwise the live-typed city's AQI, else clear sky.
+  const sky = skyForAqi(airQuality?.aqi ?? gaugeAqi ?? null);
 
   return (
     <div id="top" className="grain min-h-full">
@@ -243,13 +254,24 @@ export default function App() {
             </form>
           </motion.div>
 
-          {/* Right — live instrument readout panel */}
+          {/* Right — live instrument readout panel, sky reacts to haze */}
           <motion.aside
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ ...spring, delay: 0.08 }}
-            className="rounded-2xl border border-line p-7 lg:p-9"
+            className="relative overflow-hidden rounded-2xl border border-line p-7 lg:p-9"
           >
+            <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+              <CloudShader
+                className="absolute inset-0"
+                speed={0.6}
+                count={sky.count}
+                cloudColor={sky.cloudColor}
+                skyTopColor={sky.skyTopColor}
+                skyBottomColor={sky.skyBottomColor}
+              />
+            </div>
+            <div className="relative z-10">
             <div className="flex items-end justify-between gap-4">
               <div className="min-w-0">
                 <p className="text-xs font-medium uppercase tracking-[0.18em] text-ink-soft">
@@ -299,6 +321,7 @@ export default function App() {
               ) : (
                 <div className="skeleton mt-3 h-[120px] w-full rounded-xl" />
               )}
+            </div>
             </div>
           </motion.aside>
         </div>
