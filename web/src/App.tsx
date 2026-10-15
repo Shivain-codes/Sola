@@ -22,6 +22,7 @@ import {
 import { spring } from "./components/ui/motion";
 import { HeatTrace } from "./components/ui/HeatTrace";
 import { BandStamp, HeatNumeral } from "./components/ui/Readout";
+import { CyclingTip, TraceSkeleton } from "./components/ui/HeatPanelSkeleton";
 import { CloudShader } from "./components/ui/cloud-shader";
 import { TextReveal } from "./components/ui/text-reveal";
 import { skyForAqi } from "./lib/sky";
@@ -311,11 +312,15 @@ export default function App() {
             </div>
 
             {/* City line + provenance micro-label */}
-            <p className="mt-2 text-sm text-ink-soft">
-              {gauge
-                ? `Feels-like temperature in ${gauge.place}.`
-                : "Type your city to read the current feels-like temperature."}
-            </p>
+            {gaugeLoading ? (
+              <CyclingTip />
+            ) : (
+              <p className="mt-2 text-sm text-ink-soft">
+                {gauge
+                  ? `Feels-like temperature in ${gauge.place}.`
+                  : "Type your city to read the current feels-like temperature."}
+              </p>
+            )}
             {gauge && (
               <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.16em] text-ink-soft">
                 Updated {gauge.updated} · Open-Meteo
@@ -332,7 +337,7 @@ export default function App() {
                   <HeatTrace hours={gauge.day} />
                 </div>
               ) : (
-                <div className="skeleton mt-3 h-[120px] w-full rounded-xl" />
+                <TraceSkeleton />
               )}
             </div>
           </motion.aside>
