@@ -169,8 +169,13 @@ export default function App() {
 
   return (
     <div id="top" className="grain relative min-h-full">
-      {/* Full-page haze-reactive sky background */}
-      <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0">
+      {/* Full-page haze-reactive sky background.
+          Sticky (not fixed): visually identical while scrolling, but composited
+          as a normal page element so captures never glitch the layer. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none sticky top-0 z-0 -mb-[100vh] h-[100vh]"
+      >
         <CloudShader
           className="absolute inset-0"
           speed={0.6}
