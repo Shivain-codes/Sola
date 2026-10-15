@@ -22,7 +22,7 @@ import {
 import { spring } from "./components/ui/motion";
 import { HeatTrace } from "./components/ui/HeatTrace";
 import { BandStamp, HeatNumeral } from "./components/ui/Readout";
-import { CyclingTip, TraceSkeleton } from "./components/ui/HeatPanelSkeleton";
+import { WeatherCycler, TraceSkeleton } from "./components/ui/HeatPanelSkeleton";
 import { CloudShader } from "./components/ui/cloud-shader";
 import { TextReveal } from "./components/ui/text-reveal";
 import { skyForAqi } from "./lib/sky";
@@ -51,7 +51,7 @@ function fmtTime(d: Date): string {
 }
 
 export default function App() {
-  const [city, setCity] = useState("");
+  const [city, setCity] = useState("Delhi");
   const [jobType, setJobType] = useState(JOB_TYPES[0]);
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("17:00");
@@ -176,7 +176,13 @@ export default function App() {
           with the page, so it never fights scroll or glitches captures the way
           viewport-locked layers do. Rendered at half resolution — soft clouds
           upscale cleanly and it's far cheaper on the GPU. */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 z-0"
+        style={{
+          background: `linear-gradient(to bottom, ${sky.skyTopColor}, ${sky.skyBottomColor})`,
+        }}
+      >
         <CloudShader
           className="absolute inset-0"
           speed={0.6}
@@ -298,7 +304,7 @@ export default function App() {
                     className="mt-1 block"
                   />
                 ) : gaugeLoading ? (
-                  <div className="skeleton mt-2 h-[clamp(4rem,12vw,7rem)] w-44 rounded-2xl" />
+                  <WeatherCycler />
                 ) : (
                   <p
                     className="mt-1 font-display tnum leading-[0.85] text-line"
@@ -312,15 +318,13 @@ export default function App() {
             </div>
 
             {/* City line + provenance micro-label */}
-            {gaugeLoading ? (
-              <CyclingTip />
-            ) : (
-              <p className="mt-2 text-sm text-ink-soft">
-                {gauge
-                  ? `Feels-like temperature in ${gauge.place}.`
+            <p className="mt-2 text-sm text-ink-soft">
+              {gauge
+                ? `Feels-like temperature in ${gauge.place}.`
+                : gaugeLoading
+                  ? `Reading the heat for ${city.trim()}…`
                   : "Type your city to read the current feels-like temperature."}
-              </p>
-            )}
+            </p>
             {gauge && (
               <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.16em] text-ink-soft">
                 Updated {gauge.updated} · Open-Meteo

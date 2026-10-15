@@ -9,7 +9,7 @@
 //
 // Plan shape (strict — the web card renders exactly these fields):
 //   {
-//     riskSummary: string[2],                         // two short lines
+//     riskSummary: string[4],                          // four descriptive, dynamic lines
 //     timeline: [{ label, action, note }],            // hour blocks: work/rest/hydrate
 //     warningSigns: string[5],                         // heatstroke warning signs
 //     ifSymptoms: string[]                             // emergency steps
@@ -88,6 +88,9 @@ export const handler = async (event) => {
   }
 
   const peak = peakWindow(hourly);
+  const peakHumidity = Math.max(
+    ...hourly.map((h) => Number(h.humidity) || 0)
+  );
 
   // Try Bedrock. Any failure (access, timeout, bad parse) -> fallback.
   try {
@@ -99,12 +102,13 @@ export const handler = async (event) => {
       shiftEnd,
       hourly,
       peak,
+      peakHumidity,
       aqi,
     });
     return resp(200, { plan, source: "ai" });
   } catch (err) {
     console.error("Bedrock/plan generation failed, using fallback:", err);
-    const plan = fallbackPlan({ jobType: effectiveJob, hourly, peak, age, aqi });
+    const plan = fallbackPlan({ jobType: effectiveJob, hourly, peak, peakHumidity, age, aqi });
     return resp(200, { plan, source: "fallback" });
   }
 };
@@ -121,6 +125,7 @@ async function generateWithNova({
   shiftEnd,
   hourly,
   peak,
+  peakHumidity,
   aqi,
 }) {
   const table = hourly
@@ -164,24 +169,29 @@ async function generateWithNova({
     `Write a heat-safety plan for THIS worker. Return ONLY valid JSON (no`,
     `markdown, no code fences) with exactly this shape:`,
     `{`,
-    `  "riskSummary": ["line 1", "line 2"],`,
+    `  "riskSummary": ["line 1", "line 2", "line 3", "line 4"],`,
     `  "timeline": [{"label":"9am-11am","action":"Work","note":"short note"}],`,
     `  "warningSigns": ["sign 1","sign 2","sign 3","sign 4","sign 5"],`,
     `  "ifSymptoms": ["step 1","step 2","step 3"]`,
     `}`,
     `Rules:`,
-    `- riskSummary: exactly 2 short lines, plain words, no jargon.`,
+    `- riskSummary: exactly 4 lines, plain words, no jargon. Every line must`,
+    `  be specific to THIS worker, THIS city, and TODAY's numbers — dynamic,`,
+    `  never generic filler.`,
     `- Line 1 MUST start with "As a ${jobType}," and include the city, the`,
     `  peak feels-like temperature, and the peak window hours.`,
-    `- Line 2 MUST give the single most important action for THIS worker.`,
+    `- Line 2 MUST name the single most important action for THIS worker,`,
+    `  tied to the peak window hours (e.g. when to rest, how often to drink).`,
+    `- Line 3 MUST be personal to the worker's age${age != null ? ` (${age})` : ""}:`,
     age != null && age >= 60
-      ? `- The worker is ${age}: mention the age reason here (older adults ` +
-        `overheat faster).`
-      : null,
-    aqi != null && aqi > 150
-      ? `- Haze is unhealthy (AQI ${aqi}): line 2 must also tell them to wear ` +
-        `a mask outdoors.`
-      : null,
+      ? `-   older adults overheat faster and feel thirst late — tell them plainly.`
+      : age != null && age < 18
+        ? `-   young workers need extra water reminders and shade breaks — say so.`
+        : `-   give the second most important action for this worker's job.`,
+    `- Line 4 MUST react to today's air:`,
+    aqi != null && aqi > 100
+      ? `-   haze is ${aqiLabel(aqi)} (AQI ${aqi}) — give mask/breathing guidance.`
+      : `-   use today's peak humidity (${peakHumidity}%): if humid, warn that sweat won't cool them; if dry, remind them they dehydrate without feeling it.`,
     `- timeline: cover the FULL shift (${shiftStart || "start"} to ` +
       `${shiftEnd || "end"}), one block per 1-2 hours. action is Work, Rest, or Hydrate.`,
     `- EVERY timeline note must be specific to that block: cite the feels-like`,
@@ -243,7 +253,7 @@ function parsePlan(text) {
     return null;
   }
 
-  const riskSummary = asStringArray(obj.riskSummary).slice(0, 2);
+  const riskSummary = asStringArray(obj.riskSummary).slice(0, 4);
   const warningSigns = asStringArray(obj.warningSigns).slice(0, 5);
   const ifSymptoms = asStringArray(obj.ifSymptoms);
   const timeline = Array.isArray(obj.timeline)
@@ -258,7 +268,7 @@ function parsePlan(text) {
 
   // Minimum viable plan — otherwise treat as a parse failure and fall back.
   if (
-    riskSummary.length < 1 ||
+    riskSummary.length < 2 ||
     timeline.length < 1 ||
     warningSigns.length < 3 ||
     ifSymptoms.length < 1
@@ -273,27 +283,32 @@ function parsePlan(text) {
 // Fallback — deterministic plan built from the bands. Never a blank screen.
 // ---------------------------------------------------------------------------
 
-function fallbackPlan({ jobType, hourly, peak, age, aqi }) {
+function fallbackPlan({ jobType, hourly, peak, peakHumidity, age, aqi }) {
   const maxHi = Math.max(...hourly.map((h) => h.heatIndexC));
   const worstBand = bandForC(maxHi);
   const senior = age != null && age >= 60;
+  const peakHum = Number.isFinite(peakHumidity) ? Math.round(peakHumidity) : null;
+
+  const peakRange = peak
+    ? `Hottest from ${hourLabel(peak.startHour)} to ${hourLabel(peak.endHour)}.`
+    : `No extreme peak today.`;
 
   const riskSummary = [
-    `As a ${jobType.toLowerCase()}, today feels up to ${Math.round(
-      maxHi
-    )}°C in the hottest hours.`,
-    peak
-      ? `Hottest from ${hourLabel(peak.startHour)} to ${hourLabel(
-          peak.endHour
-        )}. Rest in shade then.`
-      : `Stay hydrated and take breaks in the shade.`,
+    `As a ${jobType.toLowerCase()}, ${peakRange} It feels up to ${Math.round(maxHi)}°C in the hottest hours.`,
+    peak && maxHi >= 39
+      ? `Rest in shade through the peak window — this is the most dangerous part of your shift.`
+      : `Drink water every 15–20 minutes through the hot hours, not just when thirsty.`,
+    senior
+      ? `At ${age}, you overheat faster and feel thirst late — take shade breaks even before you feel tired.`
+      : age != null
+        ? `At ${age}, set a timer if you can — it's easy to lose track of water when you're busy.`
+        : `If you stop sweating or feel dizzy, stop work and cool down right away.`,
+    aqi != null && aqi > 100
+      ? `Haze is ${aqiLabel(aqi).toLowerCase()} (AQI ${aqi}) — wear a mask outdoors and breathe through your nose.`
+      : peakHum != null && peakHum >= 70
+        ? `Humidity hits ${peakHum}% — sweat won't cool you well today, so shade breaks matter more.`
+        : `Dry heat dehydrates silently — sip water steadily even if you don't feel sweaty.`,
   ];
-  if (senior) {
-    riskSummary[1] += ` At ${age}, take breaks even before you feel tired.`;
-  }
-  if (aqi != null && aqi > 150) {
-    riskSummary[1] += ` Haze is unhealthy (AQI ${aqi}) — wear a mask outdoors.`;
-  }
 
   const timeline = hourly.map((h) => {
     const b = bandForC(h.heatIndexC);
