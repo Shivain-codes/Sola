@@ -80,7 +80,7 @@ export default function SafetyCard({
           caption="signs to watch for"
         >
           <ul className="flex flex-col gap-1">
-            {plan.warningSigns.slice(0, 3).map((s, i) => (
+            {plan.warningSigns.map((s, i) => (
               <li key={i} className="truncate text-[12px] leading-snug text-ink-soft">
                 {s}
               </li>
