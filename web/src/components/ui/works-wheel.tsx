@@ -31,6 +31,8 @@ export interface WorksWheelProps extends Omit<
   label?: string;
   /** Label on the card's hover affordance. Omit to drop it. @default undefined */
   action?: string;
+  /** Show the clickable index down the right-hand side. @default true */
+  showIndex?: boolean;
 }
 
 /* Geometry. The card is measured against the stage; everything else is measured
@@ -102,6 +104,7 @@ export function WorksWheel({
   items,
   label = "Works '26",
   action = "View",
+  showIndex = true,
   className,
   ...props
 }: WorksWheelProps) {
@@ -375,6 +378,7 @@ export function WorksWheel({
         {items[active]?.title}
       </div>
 
+      {showIndex && (
       <ol
         className="text-muted-foreground absolute top-[7.5%] right-[2.5%] text-right leading-[1.75]"
         style={{ fontSize: metrics.index }}
@@ -394,6 +398,7 @@ export function WorksWheel({
           </li>
         ))}
       </ol>
+      )}
     </section>
   );
 }

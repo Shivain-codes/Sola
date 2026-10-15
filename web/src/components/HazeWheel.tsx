@@ -76,6 +76,8 @@ async function searchCommons(
       .replace(/^File:/, "")
       .replace(/\.[a-z0-9]+$/i, "")
       .replace(/_/g, " ")
+      .replace(/\s*\([\d\s]+\)/g, "")
+      .trim()
       .slice(0, 42);
     items.push({ title, image: info.thumburl, href: info.descriptionurl });
   }
@@ -146,6 +148,7 @@ export default function HazeWheel({ city }: { city: string }) {
             items={items}
             label="Haze watch"
             action="Source"
+            showIndex={false}
             className="bg-transparent"
           />
         </div>
