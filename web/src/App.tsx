@@ -168,18 +168,17 @@ export default function App() {
   const sky = skyForAqi(airQuality?.aqi ?? gaugeAqi ?? null);
 
   return (
-    <div id="top" className="grain relative min-h-full">
-      {/* Full-page haze-reactive sky background.
-          Sticky (not fixed): visually identical while scrolling, but composited
-          as a normal page element so captures never glitch the layer. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none sticky top-0 z-0 -mb-[100vh] h-[100vh]"
-      >
+    <div id="top" className="grain relative min-h-full overflow-x-clip">
+      {/* Full-page haze-reactive sky background. Absolute (in-flow): it scrolls
+          with the page, so it never fights scroll or glitches captures the way
+          viewport-locked layers do. Rendered at half resolution — soft clouds
+          upscale cleanly and it's far cheaper on the GPU. */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0">
         <CloudShader
           className="absolute inset-0"
           speed={0.6}
-          count={sky.count}
+          count={6}
+          resolutionScale={0.5}
           cloudColor={sky.cloudColor}
           skyTopColor={sky.skyTopColor}
           skyBottomColor={sky.skyBottomColor}

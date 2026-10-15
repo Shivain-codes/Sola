@@ -14,6 +14,9 @@ export type CloudShaderProps = {
   skyTopColor?: string;
   /** Sky color at the bottom (hex or rgb string). */
   skyBottomColor?: string;
+  /** Backing-store resolution multiplier (default 1). Soft skies upscale
+      cleanly, so 0.5 is plenty for a full-page background and much cheaper. */
+  resolutionScale?: number;
 };
 
 const VERT = `
@@ -229,6 +232,7 @@ export const CloudShader = ({
   cloudColor = "#fbf8f2",
   skyTopColor = "#3876ba",
   skyBottomColor = "#8cbfe8",
+  resolutionScale = 1,
 }: CloudShaderProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const paramsRef = useRef({
@@ -237,6 +241,7 @@ export const CloudShader = ({
     cloudColor,
     skyTopColor,
     skyBottomColor,
+    resolutionScale,
   });
 
   paramsRef.current = {
@@ -245,6 +250,7 @@ export const CloudShader = ({
     cloudColor,
     skyTopColor,
     skyBottomColor,
+    resolutionScale,
   };
 
   useEffect(() => {
@@ -300,7 +306,7 @@ export const CloudShader = ({
     ).matches;
 
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = Math.min(window.devicePixelRatio || 1, 2) * paramsRef.current.resolutionScale;
       const width = canvas.clientWidth;
       const height = canvas.clientHeight;
       const w = Math.max(1, Math.floor(width * dpr));
