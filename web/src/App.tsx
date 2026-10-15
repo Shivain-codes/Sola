@@ -168,27 +168,24 @@ export default function App() {
   const sky = skyForAqi(airQuality?.aqi ?? gaugeAqi ?? null);
 
   return (
-    <div id="top" className="grain min-h-full">
+    <div id="top" className="grain relative min-h-full">
+      {/* Full-page haze-reactive sky background */}
+      <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0">
+        <CloudShader
+          className="absolute inset-0"
+          speed={0.6}
+          count={sky.count}
+          cloudColor={sky.cloudColor}
+          skyTopColor={sky.skyTopColor}
+          skyBottomColor={sky.skyBottomColor}
+        />
+      </div>
+      <div className="relative z-10">
       <SiteNav />
 
       {/* ---------------- Hero ---------------- */}
       <section className="mx-auto max-w-6xl px-6 pt-16 lg:pt-24">
-        {/* Sky band — haze-reactive background for the whole hero */}
-        <div className="relative -mx-6 -mt-16 px-6 pb-12 pt-16 lg:-mt-24 lg:pt-24">
-          <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-            <CloudShader
-              className="absolute inset-0"
-              speed={0.6}
-              count={sky.count}
-              cloudColor={sky.cloudColor}
-              skyTopColor={sky.skyTopColor}
-              skyBottomColor={sky.skyBottomColor}
-            />
-            {/* soften the top/bottom edges into the paper background */}
-            <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-paper to-transparent" />
-            <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-paper to-transparent" />
-          </div>
-          <div className="relative z-10 grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
+        <div className="grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
           {/* Left — message + form */}
           <motion.div
             initial={{ opacity: 0, y: 18 }}
@@ -328,7 +325,6 @@ export default function App() {
             </div>
           </motion.aside>
         </div>
-        </div>
 
         {/* Error */}
         <AnimatePresence>
@@ -402,6 +398,7 @@ export default function App() {
       </div>
 
       <SiteFooter />
+      </div>
     </div>
   );
 }
