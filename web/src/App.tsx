@@ -23,6 +23,7 @@ import { spring } from "./components/ui/motion";
 import { HeatTrace } from "./components/ui/HeatTrace";
 import { BandStamp, HeatNumeral } from "./components/ui/Readout";
 import { WeatherCycler, TraceSkeleton } from "./components/ui/HeatPanelSkeleton";
+import { SolaPreloader } from "./components/ui/SolaPreloader";
 import { CloudShader } from "./components/ui/cloud-shader";
 import { TextReveal } from "./components/ui/text-reveal";
 import { skyForAqi } from "./lib/sky";
@@ -51,7 +52,7 @@ function fmtTime(d: Date): string {
 }
 
 export default function App() {
-  const [city, setCity] = useState("Delhi");
+  const [city, setCity] = useState("");
   const [jobType, setJobType] = useState(JOB_TYPES[0]);
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("17:00");
@@ -172,6 +173,7 @@ export default function App() {
 
   return (
     <div id="top" className="grain relative min-h-full overflow-x-clip">
+      <SolaPreloader />
       {/* Full-page haze-reactive sky background. Absolute (in-flow): it scrolls
           with the page, so it never fights scroll or glitches captures the way
           viewport-locked layers do. Rendered at half resolution — soft clouds
