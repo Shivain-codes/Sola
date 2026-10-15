@@ -64,9 +64,12 @@ export async function generatePlan(args: {
     })),
   };
 
-  // 15s guard so the UI never hangs forever.
+  // 45s guard so the UI never hangs forever (Bedrock cold starts can be slow).
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
+  const timeout = setTimeout(
+    () => controller.abort(new Error("Plan request timed out — please retry.")),
+    45000,
+  );
 
   try {
     const res = await fetch(PLAN_URL, {
