@@ -309,27 +309,8 @@ export const CloudShader = ({
       "(prefers-reduced-motion: reduce)",
     ).matches;
 
-    const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2) * paramsRef.current.resolutionScale;
-      const width = canvas.clientWidth;
-      const height = canvas.clientHeight;
-      const w = Math.max(1, Math.floor(width * dpr));
-      const h = Math.max(1, Math.floor(height * dpr));
-      if (canvas.width !== w || canvas.height !== h) {
-        canvas.width = w;
-        canvas.height = h;
-      }
-      gl.viewport(0, 0, w, h);
-      gl.uniform2f(loc.res, w, h);
-    };
-
-    const observer = new ResizeObserver(resize);
-    observer.observe(canvas);
-    resize();
-
     const start = performance.now();
-    const draw = (now: number) => {
-      if (!running) return;
+    const renderFrame = (now: number) => {
       const p = paramsRef.current;
       const elapsed = reduceMotion ? 0 : ((now - start) / 1000) * p.speed;
       const cloud = parseHex(p.cloudColor);
@@ -342,6 +323,36 @@ export const CloudShader = ({
       gl.uniform3f(loc.skyTop, skyTop[0], skyTop[1], skyTop[2]);
       gl.uniform3f(loc.skyBottom, skyBottom[0], skyBottom[1], skyBottom[2]);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
+    };
+
+    const resize = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2) * paramsRef.current.resolutionScale;
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
+      const w = Math.max(1, Math.floor(width * dpr));
+      const h = Math.max(1, Math.floor(height * dpr));
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w;
+        canvas.height = h;
+        gl.viewport(0, 0, w, h);
+        gl.uniform2f(loc.res, w, h);
+        // Redraw synchronously: resetting canvas.width clears the drawing
+        // buffer, so paint a fresh frame immediately instead of letting the
+        // compositor present the cleared buffer for a frame.
+        renderFrame(performance.now());
+        return;
+      }
+      gl.viewport(0, 0, w, h);
+      gl.uniform2f(loc.res, w, h);
+    };
+
+    const observer = new ResizeObserver(resize);
+    observer.observe(canvas);
+    resize();
+
+    const draw = (now: number) => {
+      if (!running) return;
+      renderFrame(now);
       frame = requestAnimationFrame(draw);
     };
 
