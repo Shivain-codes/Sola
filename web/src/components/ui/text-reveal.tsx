@@ -248,14 +248,18 @@ export function TextReveal({
 /**
  * TextReveal that starts the animation when it scrolls into view.
  * Use for below-the-fold headings; the hero can use TextReveal directly.
+ *
+ * NOTE: the observer wrapper must be a real block box — display:contents
+ * generates no box, so IntersectionObserver would never fire and the text
+ * would never appear.
  */
 export function TextRevealInView(props: TextRevealProps) {
-  const ref = useRef<HTMLSpanElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
   return (
-    <span ref={ref} className="contents">
+    <div ref={ref} className="block">
       <TextReveal trigger={inView} {...props} />
-    </span>
+    </div>
   );
 }
 
