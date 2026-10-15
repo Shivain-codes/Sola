@@ -1,12 +1,13 @@
 import {
+  CloudFog,
   CloudSun,
   Droplets,
   Flame,
-  HeartPulse,
-  Siren,
   Sun,
   Thermometer,
-  Wind,
+  TriangleAlert,
+  Waves,
+  HeartPulse,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -18,7 +19,6 @@ import {
   type HourlyHeat,
 } from "../lib/heat";
 import type { Plan } from "../lib/plan";
-import { toneHex } from "../lib/tone";
 import { Reveal as SiteReveal } from "./ui/Reveal";
 
 type Props = {
@@ -38,6 +38,8 @@ type Props = {
 
 const HEAT_GRADIENT =
   "linear-gradient(90deg,#15803D 0%,#CA8A04 38%,#EA580C 62%,#DC2626 100%)";
+const AQI_GRADIENT =
+  "linear-gradient(90deg,#00E400 0%,#FFFF00 20%,#FF7E00 40%,#FF0000 60%,#8F3F97 80%,#7E0023 100%)";
 const UV_GRADIENT =
   "linear-gradient(90deg,#15803D 0%,#CA8A04 27%,#EA580C 45%,#DC2626 64%,#7C3AED 100%)";
 
@@ -60,6 +62,8 @@ export default function SafetyCard({
   const band = bandFor(nowHi);
   const blocks = buildBlocks(hours);
   const guide = guidanceFor(hi, age);
+  const maxUv = Math.max(0, ...hours.map((h) => h.uv ?? 0));
+  const maxHumidity = Math.max(0, ...hours.map((h) => h.humidity ?? 0));
 
   return (
     <div className="flex flex-col gap-3">
@@ -76,7 +80,7 @@ export default function SafetyCard({
         </Module>
         <Module
           label="Warning signs"
-          icon={Siren}
+          icon={TriangleAlert}
           value={String(plan.warningSigns.length)}
           caption="signs to watch for"
         >
@@ -90,14 +94,38 @@ export default function SafetyCard({
         </Module>
         {airQuality && (
           <Module
-            label="Haze score"
-            icon={Wind}
+            label="Air quality"
+            icon={CloudFog}
             value={String(Math.round(airQuality.aqi))}
             caption={aqiBandFor(airQuality.aqi).label}
           >
             <AqiScale aqi={airQuality.aqi} />
+            <p className="mt-2 text-[12px] leading-snug text-ink-soft">
+              {aqiBandFor(airQuality.aqi).meaning}
+            </p>
           </Module>
         )}
+        <Module
+          label="UV index"
+          icon={Sun}
+          value={String(Math.round(maxUv))}
+          caption={uvLabel(maxUv)}
+        >
+          <UvScale uv={maxUv} />
+          <p className="mt-2 text-[12px] leading-snug text-ink-soft">
+            {uvAdvice(maxUv)}
+          </p>
+        </Module>
+        <Module
+          label="Humidity"
+          icon={Waves}
+          value={`${Math.round(maxHumidity)}%`}
+          caption={humidityLabel(maxHumidity)}
+        >
+          <p className="mt-2 text-[12px] leading-snug text-ink-soft">
+            {humidityAdvice(maxHumidity)}
+          </p>
+        </Module>
       </SiteReveal>
       <Card>
         <CardLabel>Your plan</CardLabel>
@@ -206,7 +234,7 @@ function HourlyCard({ hours, nowIdx }: { hours: HourlyHeat[]; nowIdx: number }) 
                 >
                   {isNow ? "Now" : hourLabel(h.hour).toUpperCase()}
                 </span>
-                <Icon size={19} strokeWidth={2} color={toneHex[b.tone]} />
+                <Icon size={19} strokeWidth={2} color="#191512" />
                 <span
                   className={
                     "text-[15px] tnum " +
@@ -268,7 +296,7 @@ function BreakdownCard({
                   {hourLabel(b.startHour).toUpperCase()}–
                   {hourLabel(b.endHour).toUpperCase()}
                 </span>
-                <Icon size={17} strokeWidth={2} color={toneHex[b.tone]} />
+                <Icon size={17} strokeWidth={2} color="#191512" />
                 <span className="w-9 shrink-0 text-right text-[15px] text-ink-soft/80 tnum">
                   {Math.round(b.lo)}°
                 </span>
@@ -322,7 +350,7 @@ function CardLabel({
 }) {
   return (
     <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.14em] text-ink-soft">
-      {Icon && <Icon size={13} strokeWidth={2.25} color="#EA580C" />}
+      {Icon && <Icon size={13} strokeWidth={2.25} color="#191512" />}
       {children}
     </p>
   );
@@ -344,7 +372,7 @@ function Module({
   return (
     <div className="flex flex-col rounded-[22px] border border-line bg-paper/75 p-4 backdrop-blur-md">
       <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.12em] text-ink-soft">
-        <Icon size={13} strokeWidth={2.25} color="#EA580C" />
+        <Icon size={13} strokeWidth={2.25} color="#191512" />
         {label}
       </p>
       <p className="mt-2 font-display text-[32px] font-light leading-none text-ink tnum">
@@ -371,6 +399,18 @@ function NeedScale({ level }: { level: number }) {
 function AqiScale({ aqi }: { aqi: number }) {
   const pct = Math.min(100, Math.max(0, (aqi / 300) * 100));
   return (
+    <div className="relative h-[6px] rounded-full" style={{ background: AQI_GRADIENT }}>
+      <div
+        className="absolute top-1/2 h-[14px] w-[14px] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-paper bg-ink shadow"
+        style={{ left: `${pct}%` }}
+      />
+    </div>
+  );
+}
+
+function UvScale({ uv }: { uv: number }) {
+  const pct = Math.min(100, Math.max(0, (uv / 11) * 100));
+  return (
     <div className="relative h-[6px] rounded-full" style={{ background: UV_GRADIENT }}>
       <div
         className="absolute top-1/2 h-[14px] w-[14px] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-paper bg-ink shadow"
@@ -378,6 +418,33 @@ function AqiScale({ aqi }: { aqi: number }) {
       />
     </div>
   );
+}
+
+/** UV index → Apple-style label and worker advice. */
+function uvLabel(uv: number): string {
+  if (uv < 3) return "Low";
+  if (uv < 6) return "Moderate";
+  if (uv < 8) return "High";
+  if (uv < 11) return "Very high";
+  return "Extreme";
+}
+function uvAdvice(uv: number): string {
+  if (uv < 3) return "Low risk — no protection needed.";
+  if (uv < 6) return "Wear a cap and seek shade at midday.";
+  if (uv < 8) return "Use sun protection 10:00–16:00.";
+  return "Avoid midday sun — cover skin fully.";
+}
+
+/** Relative humidity → plain-language label and advice. */
+function humidityLabel(rh: number): string {
+  if (rh < 30) return "Dry";
+  if (rh <= 60) return "Comfortable";
+  return "Muggy";
+}
+function humidityAdvice(rh: number): string {
+  if (rh < 30) return "Dry air — drink even if not thirsty.";
+  if (rh <= 60) return "Sweat cools you efficiently at this level.";
+  return "Sweat can't cool you well — slow down and hydrate.";
 }
 
 /* ---------------- helpers ---------------- */
