@@ -255,6 +255,9 @@ export const CloudShader = ({
       alpha: false,
       antialias: false,
       premultipliedAlpha: false,
+      // Keep the drawing buffer so full-page screenshot captures never read
+      // back an already-consumed (garbage) buffer as a static-noise band.
+      preserveDrawingBuffer: true,
     });
     if (!gl) return;
 
