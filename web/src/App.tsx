@@ -1,11 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   geocodeCity,
   fetchHourlyHeat,
   fetchAirQuality,
   hoursInShift,
-  bandFor,
   type HourlyHeat,
   type AirQuality,
 } from "./lib/heat";
@@ -20,9 +19,6 @@ import {
   TimeField,
 } from "./components/ui/Field";
 import { spring } from "./components/ui/motion";
-import { HeatTrace } from "./components/ui/HeatTrace";
-import { BandStamp, HeatNumeral } from "./components/ui/Readout";
-import { WeatherCycler, TraceSkeleton } from "./components/ui/HeatPanelSkeleton";
 import { SolaPreloader } from "./components/ui/SolaPreloader";
 import { CloudShader } from "./components/ui/cloud-shader";
 import { TextReveal } from "./components/ui/text-reveal";
@@ -36,20 +32,6 @@ const JOB_TYPES = [
   "Street vendor",
   "Other",
 ];
-
-/** Live hero gauge — current-hour heat index + the full day's curve. */
-type Gauge = {
-  place: string;
-  hiC: number;
-  day: HourlyHeat[];
-  updated: string;
-} | null;
-
-function fmtTime(d: Date): string {
-  return d
-    .toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-    .toUpperCase();
-}
 
 export default function App() {
   const [city, setCity] = useState("");
@@ -65,49 +47,6 @@ export default function App() {
   const [shiftHours, setShiftHours] = useState<HourlyHeat[]>([]);
   const [planResult, setPlanResult] = useState<PlanResult | null>(null);
   const [airQuality, setAirQuality] = useState<AirQuality | null>(null);
-
-  const [gauge, setGauge] = useState<Gauge>(null);
-  const [gaugeLoading, setGaugeLoading] = useState(false);
-  const [gaugeAqi, setGaugeAqi] = useState<number | null>(null);
-  const gaugeReq = useRef(0);
-
-  // Debounced live readout: current heat index + today's full curve.
-  useEffect(() => {
-    const q = city.trim();
-    if (q.length < 3) {
-      setGauge(null);
-      setGaugeAqi(null);
-      setGaugeLoading(false);
-      return;
-    }
-    const reqId = ++gaugeReq.current;
-    setGaugeLoading(true);
-    const t = setTimeout(async () => {
-      try {
-        const geo = await geocodeCity(q);
-        const hourly = await fetchHourlyHeat(geo.lat, geo.lon);
-        const aq = await fetchAirQuality(geo.lat, geo.lon).catch(() => null);
-        if (reqId !== gaugeReq.current) return;
-        setGaugeAqi(aq?.aqi ?? null);
-        const nowHour = new Date().getHours();
-        const current =
-          hourly.find((h) => h.hour === nowHour) ?? hourly[hourly.length - 1];
-        if (reqId !== gaugeReq.current) return;
-        setGauge({
-          place: geo.name,
-          hiC: current.hiC,
-          day: hourly,
-          updated: fmtTime(new Date()),
-        });
-      } catch {
-        if (reqId !== gaugeReq.current) return;
-        setGauge(null);
-      } finally {
-        if (reqId === gaugeReq.current) setGaugeLoading(false);
-      }
-    }, 550);
-    return () => clearTimeout(t);
-  }, [city]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -165,11 +104,9 @@ export default function App() {
   }
 
   const hasPlan = planResult && shiftHours.length > 0;
-  const gaugeTone = gauge ? bandFor(gauge.hiC).tone : null;
 
-  // Sky behind the hero instrument panel follows the haze: the submitted
-  // plan's AQI wins, otherwise the live-typed city's AQI, else clear sky.
-  const sky = skyForAqi(airQuality?.aqi ?? gaugeAqi ?? null);
+  // Sky follows the haze of the submitted plan's AQI, else clear sky.
+  const sky = skyForAqi(airQuality?.aqi ?? null);
 
   return (
     <div id="top" className="grain relative min-h-full overflow-x-clip">
@@ -200,7 +137,7 @@ export default function App() {
 
       {/* ---------------- Hero ---------------- */}
       <section className="mx-auto max-w-6xl px-6 pt-16 lg:pt-24">
-        <div className="grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
+        <div className="max-w-2xl">
           {/* Left — message + form */}
           <motion.div
             initial={{ opacity: 0, y: 18 }}
@@ -285,67 +222,6 @@ export default function App() {
               </div>
             </form>
           </motion.div>
-
-          {/* Right — live instrument readout panel */}
-          <motion.aside
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ ...spring, delay: 0.08 }}
-            className="rounded-2xl border border-line bg-paper/55 p-7 backdrop-blur-xl lg:p-9"
-          >
-            <div className="flex items-end justify-between gap-4">
-              <div className="min-w-0">
-                <p className="text-xs font-medium uppercase tracking-[0.18em] text-ink-soft">
-                  {gauge ? "Right now" : gaugeLoading ? "Reading…" : "Live heat index"}
-                </p>
-                {gauge ? (
-                  <HeatNumeral
-                    value={gauge.hiC}
-                    fontSize="clamp(4rem, 12vw, 7rem)"
-                    className="mt-1 block"
-                  />
-                ) : gaugeLoading ? (
-                  <WeatherCycler />
-                ) : (
-                  <p
-                    className="mt-1 font-display tnum leading-[0.85] text-line"
-                    style={{ fontSize: "clamp(4rem, 12vw, 7rem)" }}
-                  >
-                    --°
-                  </p>
-                )}
-              </div>
-              {gauge && gaugeTone && <BandStamp tone={gaugeTone} className="mb-3 shrink-0" />}
-            </div>
-
-            {/* City line + provenance micro-label */}
-            <p className="mt-2 text-sm text-ink-soft">
-              {gauge
-                ? `Feels-like temperature in ${gauge.place}.`
-                : gaugeLoading
-                  ? `Reading the heat for ${city.trim()}…`
-                  : "Type your city to read the current feels-like temperature."}
-            </p>
-            {gauge && (
-              <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.16em] text-ink-soft">
-                Updated {gauge.updated} · Open-Meteo
-              </p>
-            )}
-
-            {/* Heat trace — oscilloscope line of today's curve */}
-            <div className="mt-7 border-t border-line pt-6">
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-ink-soft">
-                Today's trace
-              </p>
-              {gauge ? (
-                <div className="mt-3">
-                  <HeatTrace hours={gauge.day} />
-                </div>
-              ) : (
-                <TraceSkeleton />
-              )}
-            </div>
-          </motion.aside>
         </div>
 
         {/* Error */}
