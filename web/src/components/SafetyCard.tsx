@@ -71,7 +71,7 @@ export default function SafetyCard({
       <HourlyCard hours={hours} nowIdx={nowIdx} />
       <BreakdownCard blocks={blocks} dayMin={lo} dayMax={hi} />
 
-      <SiteReveal as="section" className="grid grid-cols-2 gap-3">
+      <SiteReveal as="section" className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <Module label="Hydration" icon={Droplets} value="250 ml" caption={guide.waterEvery}>
           <NeedScale level={guide.level} />
         </Module>
