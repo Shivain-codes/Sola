@@ -87,7 +87,7 @@ export function SiteFooter() {
     <footer className="border-t border-line">
       <RevealGroup
         stagger={0.08}
-        className="mx-auto grid max-w-6xl gap-10 px-6 py-16 sm:grid-cols-2 lg:grid-cols-4"
+        className="mx-auto grid max-w-6xl gap-10 px-6 pb-8 pt-16 sm:grid-cols-2 lg:grid-cols-4"
       >
         {/* a. brand */}
         <RevealItem>
@@ -95,9 +95,6 @@ export function SiteFooter() {
           <p className="mt-3 max-w-xs text-sm leading-relaxed text-ink-soft">
             Reads today's heat for your city and shift, then tells you what to
             do about it — in plain words.
-          </p>
-          <p className="mt-4 text-xs uppercase tracking-[0.14em] text-ink-soft">
-            Built for WeMakeDevs Environmental Hacks
           </p>
         </RevealItem>
 
@@ -156,7 +153,7 @@ export function SiteFooter() {
       </RevealGroup>
 
       <div className="border-t border-line">
-        <div className="mx-auto max-w-6xl px-6 py-6">
+        <div className="mx-auto max-w-6xl px-6 py-4">
           <p className="text-xs text-ink-soft">© 2026 Sola</p>
         </div>
       </div>
