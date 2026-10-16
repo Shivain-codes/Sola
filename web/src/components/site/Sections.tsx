@@ -85,7 +85,7 @@ export function WhyItMatters() {
         {cards.map((c) => (
           <RevealItem
             key={c.title}
-            className="flex flex-col rounded-2xl border border-line bg-paper/55 p-7 backdrop-blur-xl"
+            className="flex flex-col rounded-2xl border border-line bg-paper/25 p-7 backdrop-blur-xl"
           >
             <c.icon size={24} strokeWidth={1.75} color="#EA580C" />
             <TextRevealInView
