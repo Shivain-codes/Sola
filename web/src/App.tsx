@@ -144,6 +144,16 @@ export default function App() {
   // Sky follows the haze of the submitted plan's AQI, else clear sky.
   const sky = skyForAqi(airQuality?.aqi ?? null);
 
+  // Paint the body with the same sky gradient. The in-page sky layer only
+  // covers #top; if the mobile browser exposes body below it (toolbar
+  // viewport quirks), it must show sky — never the cream paper fallback.
+  useEffect(() => {
+    document.body.style.background = `linear-gradient(to bottom, ${sky.skyTopColor}, ${sky.skyBottomColor})`;
+    return () => {
+      document.body.style.background = "";
+    };
+  }, [sky.skyTopColor, sky.skyBottomColor]);
+
   return (
     <div id="top" className="grain relative min-h-full overflow-x-clip">
       <SolaPreloader />
