@@ -10,11 +10,11 @@ const SCROLL = (id: string) => (e: React.MouseEvent) => {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
 };
 
-/* ---------------- Sticky header ---------------- */
+/* ---------------- Header (scrolls away with the page) ---------------- */
 
 export function SiteNav() {
   return (
-    <header className="sticky top-0 z-40 border-b border-line bg-paper/90 backdrop-blur-sm">
+    <header className="border-b border-line bg-paper/90 backdrop-blur-sm">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
         <a
           href="#top"
