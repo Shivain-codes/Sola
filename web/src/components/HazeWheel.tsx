@@ -177,6 +177,28 @@ export default function HazeWheel({ city }: { city: string }) {
           />
         </div>
       </Reveal>
+      <Reveal className="mt-6">
+        <p className="text-center text-xs text-ink-soft">
+          Haze images via{" "}
+          <a
+            href="https://commons.wikimedia.org"
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-2 transition-colors hover:text-ink"
+          >
+            Wikimedia Commons
+          </a>{" "}
+          · Live haze coverage:{" "}
+          <a
+            href="https://www.straitstimes.com/singapore/haze-in-singapore-persists-24-hour-psi-remains-unhealthy-for-all-regions"
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-2 transition-colors hover:text-ink"
+          >
+            The Straits Times
+          </a>
+        </p>
+      </Reveal>
     </section>
   );
 }
