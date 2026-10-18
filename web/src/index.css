@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
 /* ------------------------------------------------------------------ */
 /* Sola — EXACT design spec. Palette, type, motion locked.            */
@@ -24,6 +25,19 @@
   --color-foreground: #191512;
   --color-muted: #e8dfd3;
   --color-muted-foreground: #6b5f52;
+  --color-primary: #191512;
+  --color-primary-foreground: #faf6f0;
+  --color-secondary: #e8dfd3;
+  --color-secondary-foreground: #191512;
+  --color-accent: #e8dfd3;
+  --color-accent-foreground: #191512;
+  --color-popover: #faf6f0;
+  --color-popover-foreground: #191512;
+  --color-border: #e8dfd3;
+  --color-input: #e8dfd3;
+  --color-ring: #ea580c;
+  --color-destructive: #dc2626;
+  --color-destructive-foreground: #faf6f0;
 }
 
 @layer base {

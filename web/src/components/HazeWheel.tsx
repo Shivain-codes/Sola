@@ -1,14 +1,20 @@
 import { useEffect, useState } from "react";
-import { WorksWheel, type WorksWheelItem } from "./ui/works-wheel";
+import { ArrowUpRight } from "lucide-react";
 import { Reveal } from "./ui/Reveal";
 
 /* ------------------------------------------------------------------ */
-/* Haze watch — a turning wheel of real haze skies for one location.   */
+/* Haze watch — a scrollable row of real haze skies for one location.  */
 /* Images are fetched live from Wikimedia Commons (freely licensed),   */
 /* filtered to the location; a curated set covers the API being down.  */
 /* ------------------------------------------------------------------ */
 
-const FALLBACKS: Record<string, WorksWheelItem[]> = {
+export interface HazeItem {
+  title: string;
+  image: string;
+  href?: string;
+}
+
+const FALLBACKS: Record<string, HazeItem[]> = {
   singapore: [
     {
       title: "Singapore haze — Oct 2026",
@@ -59,7 +65,7 @@ type CommonsPage = {
 async function searchCommons(
   query: string,
   limit: number,
-): Promise<WorksWheelItem[]> {
+): Promise<HazeItem[]> {
   const url =
     "https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*" +
     `&generator=search&gsrsearch=${encodeURIComponent(query)}` +
@@ -68,7 +74,7 @@ async function searchCommons(
   if (!res.ok) throw new Error("commons search failed");
   const data = await res.json();
   const pages: Record<string, CommonsPage> = data?.query?.pages ?? {};
-  const items: WorksWheelItem[] = [];
+  const items: HazeItem[] = [];
   for (const p of Object.values(pages)) {
     const info = p.imageinfo?.[0];
     if (!info?.thumburl) continue;
@@ -87,9 +93,9 @@ async function searchCommons(
 }
 
 /** Images for exactly one location — nothing else. */
-function useHazeImages(location: string): WorksWheelItem[] {
+function useHazeImages(location: string): HazeItem[] {
   const key = location.trim().toLowerCase() || "singapore";
-  const [items, setItems] = useState<WorksWheelItem[]>(
+  const [items, setItems] = useState<HazeItem[]>(
     () => FALLBACKS[key] ?? FALLBACKS.singapore,
   );
 
@@ -144,14 +150,33 @@ export default function HazeWheel({ city }: { city: string }) {
         </h2>
       </Reveal>
       <Reveal className="mt-8">
-        <div className="h-[68vh] min-h-[480px] w-full">
-          <WorksWheel
-            items={items}
-            label="Haze watch"
-            action="Source"
-            showIndex={false}
-            className="bg-transparent"
-          />
+        <div className="-mx-6 overflow-x-auto px-6 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex w-max snap-x snap-mandatory gap-5">
+            {items.map((item) => (
+              <a
+                key={item.image}
+                href={item.href}
+                target="_blank"
+                rel="noreferrer"
+                className="group relative block h-64 w-80 shrink-0 snap-start overflow-hidden rounded-2xl border border-line bg-paper/40 shadow-[0_18px_40px_-24px_rgba(25,21,18,0.35)]"
+              >
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  loading="lazy"
+                  draggable={false}
+                  className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                />
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 bg-gradient-to-t from-ink/70 via-ink/25 to-transparent p-4 pt-10">
+                  <p className="text-sm font-medium text-paper">{item.title}</p>
+                  <span className="flex shrink-0 items-center gap-1 rounded-full bg-paper/85 px-2.5 py-1 text-[0.7rem] font-medium text-ink backdrop-blur-sm">
+                    <ArrowUpRight className="size-3" aria-hidden="true" />
+                    Source
+                  </span>
+                </div>
+              </a>
+            ))}
+          </div>
         </div>
       </Reveal>
     </section>

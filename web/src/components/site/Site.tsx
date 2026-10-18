@@ -2,8 +2,9 @@ import { useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { spring } from "../ui/motion";
-import { RevealGroup, RevealItem } from "../ui/Reveal";
 import { TextRevealInView } from "../ui/text-reveal";
+import NavigationBar from "../ui/navigation-bar";
+import { Footer7 } from "../ui/footer-7";
 
 const SCROLL = (id: string) => (e: React.MouseEvent) => {
   e.preventDefault();
@@ -13,42 +14,7 @@ const SCROLL = (id: string) => (e: React.MouseEvent) => {
 /* ---------------- Header (scrolls away with the page) ---------------- */
 
 export function SiteNav() {
-  return (
-    <header className="border-b border-line bg-paper/90 backdrop-blur-sm">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-        <a
-          href="#top"
-          onClick={SCROLL("top")}
-          className="font-display text-xl text-ink"
-        >
-          Sola
-        </a>
-        <nav className="hidden items-center gap-8 md:flex">
-          <a
-            href="#how"
-            onClick={SCROLL("how")}
-            className="text-sm text-ink-soft transition-colors hover:text-ink"
-          >
-            How it works
-          </a>
-          <a
-            href="#why"
-            onClick={SCROLL("why")}
-            className="text-sm text-ink-soft transition-colors hover:text-ink"
-          >
-            Why it matters
-          </a>
-          <a
-            href="#app"
-            onClick={SCROLL("app")}
-            className="rounded-full bg-ink px-5 py-2 font-display text-sm text-paper transition-colors hover:bg-[#2a241e]"
-          >
-            Get my plan
-          </a>
-        </nav>
-      </div>
-    </header>
-  );
+  return <NavigationBar />;
 }
 
 /* ---------------- CTA band (transparent, text + button only) ---------------- */
@@ -84,79 +50,39 @@ export function SiteFooter() {
   const [modal, setModal] = useState<null | "privacy" | "terms">(null);
 
   return (
-    <footer className="border-t border-line">
-      <RevealGroup
-        stagger={0.08}
-        className="mx-auto grid max-w-6xl gap-10 px-6 pb-8 pt-16 sm:grid-cols-2 lg:grid-cols-4"
-      >
-        {/* a. brand */}
-        <RevealItem>
-          <p className="font-display text-xl text-ink">Sola</p>
-          <p className="mt-3 max-w-xs text-sm leading-relaxed text-ink-soft">
-            Reads today's heat for your city and shift, then tells you what to
-            do about it — in plain words.
-          </p>
-        </RevealItem>
-
-        {/* b. product anchors */}
-        <RevealItem className="flex flex-col gap-3 text-sm">
-          <p className="font-display text-xs uppercase tracking-[0.16em] text-ink-soft">
-            Product
-          </p>
-          <a href="#app" onClick={SCROLL("app")} className="text-ink-soft hover:text-ink">
-            Get my plan
-          </a>
-          <a href="#how" onClick={SCROLL("how")} className="text-ink-soft hover:text-ink">
-            How it works
-          </a>
-          <a href="#why" onClick={SCROLL("why")} className="text-ink-soft hover:text-ink">
-            Why it matters
-          </a>
-        </RevealItem>
-
-        {/* c. data + safety */}
-        <RevealItem className="flex flex-col gap-3 text-sm">
-          <p className="font-display text-xs uppercase tracking-[0.16em] text-ink-soft">
-            Data &amp; safety
-          </p>
-          <a
-            href="https://open-meteo.com"
-            target="_blank"
-            rel="noreferrer"
-            className="text-ink-soft underline-offset-2 hover:text-ink hover:underline"
-          >
-            Weather by Open-Meteo
-          </a>
-          <p className="text-ink-soft">
-            Emergency? Call your local emergency number.
-          </p>
-        </RevealItem>
-
-        {/* d. legal */}
-        <RevealItem className="flex flex-col gap-3 text-sm">
-          <p className="font-display text-xs uppercase tracking-[0.16em] text-ink-soft">
-            Legal
-          </p>
-          <button
-            onClick={() => setModal("privacy")}
-            className="text-left text-ink-soft hover:text-ink"
-          >
-            Privacy
-          </button>
-          <button
-            onClick={() => setModal("terms")}
-            className="text-left text-ink-soft hover:text-ink"
-          >
-            Terms
-          </button>
-        </RevealItem>
-      </RevealGroup>
-
-      <div className="border-t border-line">
-        <div className="mx-auto max-w-6xl px-6 py-4">
-          <p className="text-xs text-ink-soft">© 2026 Sola</p>
-        </div>
-      </div>
+    <footer>
+      <Footer7
+        title="Sola"
+        titleHref="#top"
+        onTitleClick={SCROLL("top")}
+        description="Reads today's heat for your city and shift, then tells you what to do about it — in plain words."
+        sections={[
+          {
+            title: "Product",
+            links: [
+              { name: "Get my plan", href: "#app", onClick: SCROLL("app") },
+              { name: "How it works", href: "#how", onClick: SCROLL("how") },
+              { name: "Why it matters", href: "#why", onClick: SCROLL("why") },
+            ],
+          },
+          {
+            title: "Data & safety",
+            links: [
+              {
+                name: "Weather by Open-Meteo",
+                href: "https://open-meteo.com",
+                external: true,
+              },
+              { name: "Emergency? Call your local emergency number.", href: "" },
+            ],
+          },
+        ]}
+        copyright="© 2026 Sola"
+        legalLinks={[
+          { name: "Privacy", onClick: () => setModal("privacy") },
+          { name: "Terms", onClick: () => setModal("terms") },
+        ]}
+      />
 
       <AnimatePresence>
         {modal && (

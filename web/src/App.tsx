@@ -10,7 +10,7 @@ import {
 } from "./lib/heat";
 import { generatePlan, type PlanResult } from "./lib/plan";
 import SafetyCard from "./components/SafetyCard";
-import { Button } from "./components/ui/Button";
+import { SolaButton as Button } from "./components/ui/SolaButton";
 import {
   FieldRow,
   NumberField,

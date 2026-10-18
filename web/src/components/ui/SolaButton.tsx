@@ -4,7 +4,7 @@ import { cn } from "../../lib/cn";
 import { spring } from "./motion";
 
 /** Solid ink, paper text, rounded-full, no shadow. 2px orange focus (global). */
-export function Button({
+export function SolaButton({
   children,
   type = "button",
   disabled,
