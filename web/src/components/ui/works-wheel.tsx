@@ -291,9 +291,12 @@ export function WorksWheel({
           drag.current = event.clientY;
         }}
         onPointerUp={() => {
-          // Land on an item rather than between two.
+          // Land on a clean state rather than frozen mid-morph: snap the
+          // ring-to-drum transition too, not just the drum items past it.
+          // (A drag released mid-transition used to leave the wheel stuck
+          // scattered between the ring and the drum.)
           drag.current = null;
-          if (target.current > 1) to(Math.round(target.current));
+          to(Math.round(target.current));
         }}
         onKeyDown={(event) => {
           if (event.key === "ArrowDown") to(Math.round(target.current) + 1);
@@ -309,7 +312,7 @@ export function WorksWheel({
           {items.map((item, i) => {
             const Tag = (item.href ? "a" : "div") as "a";
             return (
-              <React.Fragment key={item.title}>
+              <React.Fragment key={item.image}>
                 <Tag
                   id={`works-wheel-${i}`}
                   role="option"

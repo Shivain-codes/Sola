@@ -1,20 +1,14 @@
 import { useEffect, useState } from "react";
-import { ArrowUpRight } from "lucide-react";
+import { WorksWheel, type WorksWheelItem } from "./ui/works-wheel";
 import { Reveal } from "./ui/Reveal";
 
 /* ------------------------------------------------------------------ */
-/* Haze watch — a scrollable row of real haze skies for one location.  */
+/* Haze watch — a turning wheel of real haze skies for one location.   */
 /* Images are fetched live from Wikimedia Commons (freely licensed),   */
 /* filtered to the location; a curated set covers the API being down.  */
 /* ------------------------------------------------------------------ */
 
-export interface HazeItem {
-  title: string;
-  image: string;
-  href?: string;
-}
-
-const FALLBACKS: Record<string, HazeItem[]> = {
+const FALLBACKS: Record<string, WorksWheelItem[]> = {
   singapore: [
     {
       title: "Singapore haze — Oct 2026",
@@ -59,22 +53,24 @@ const FALLBACKS: Record<string, HazeItem[]> = {
 
 type CommonsPage = {
   title?: string;
-  imageinfo?: { thumburl?: string; descriptionurl?: string }[];
+  imageinfo?: { thumburl?: string; descriptionurl?: string; timestamp?: string }[];
 };
+
+type HazeImage = WorksWheelItem & { uploadedAt: number };
 
 async function searchCommons(
   query: string,
   limit: number,
-): Promise<HazeItem[]> {
+): Promise<HazeImage[]> {
   const url =
     "https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*" +
-    `&generator=search&gsrsearch=${encodeURIComponent(query)}` +
-    `&gsrnamespace=6&gsrlimit=${limit}&prop=imageinfo&iiprop=url&iiurlwidth=900`;
+    `&generator=search&gsrsearch=${encodeURIComponent(query + " filetype:bitmap")}` +
+    `&gsrnamespace=6&gsrlimit=${limit}&prop=imageinfo&iiprop=url|timestamp&iiurlwidth=900`;
   const res = await fetch(url);
   if (!res.ok) throw new Error("commons search failed");
   const data = await res.json();
   const pages: Record<string, CommonsPage> = data?.query?.pages ?? {};
-  const items: HazeItem[] = [];
+  const items: HazeImage[] = [];
   for (const p of Object.values(pages)) {
     const info = p.imageinfo?.[0];
     if (!info?.thumburl) continue;
@@ -87,15 +83,24 @@ async function searchCommons(
       .replace(/\s{2,}/g, " ")
       .trim()
       .slice(0, 42);
-    items.push({ title, image: info.thumburl, href: info.descriptionurl });
+    items.push({
+      title,
+      image: info.thumburl,
+      href: info.descriptionurl,
+      uploadedAt: info.timestamp ? +new Date(info.timestamp) : 0,
+    });
   }
   return items;
 }
 
-/** Images for exactly one location — nothing else. */
-function useHazeImages(location: string): HazeItem[] {
+/** Images for exactly one location — nothing else. Fetched live on every
+    visit (realtime), newest uploads first so the wheel never goes stale, and
+    deterministically rotated each day so a single day always brings a fresh
+    wheel. Everything comes from Wikimedia Commons — real, freely-licensed
+    photos, each card linking its file page. */
+function useHazeImages(location: string): WorksWheelItem[] {
   const key = location.trim().toLowerCase() || "singapore";
-  const [items, setItems] = useState<HazeItem[]>(
+  const [items, setItems] = useState<WorksWheelItem[]>(
     () => FALLBACKS[key] ?? FALLBACKS.singapore,
   );
 
@@ -105,8 +110,8 @@ function useHazeImages(location: string): HazeItem[] {
     (async () => {
       try {
         const [haze, smog] = await Promise.all([
-          searchCommons(`${location} haze`, 6),
-          searchCommons(`${location} smog`, 6),
+          searchCommons(`${location} haze`, 15),
+          searchCommons(`${location} smog`, 15),
         ]);
         if (cancelled) return;
         const seen = new Set<string>();
@@ -119,7 +124,19 @@ function useHazeImages(location: string): HazeItem[] {
             t.includes(key) && (t.includes("haze") || t.includes("smog"))
           );
         });
-        if (matched.length >= 3) setItems(matched.slice(0, 10));
+        // Newest uploads first — fresh photos, not decade-old ones.
+        matched.sort((a, b) => b.uploadedAt - a.uploadedAt);
+        if (matched.length >= 3) {
+          // A deterministic daily rotation: every day the wheel opens on a
+          // different slice of the pool, so each single day brings new images.
+          const day = Math.floor(Date.now() / 86400000);
+          const offset = day % matched.length;
+          const rotated = [
+            ...matched.slice(offset),
+            ...matched.slice(0, offset),
+          ];
+          setItems(rotated.slice(0, 15));
+        }
       } catch {
         // Keep the curated fallback.
       }
@@ -150,33 +167,14 @@ export default function HazeWheel({ city }: { city: string }) {
         </h2>
       </Reveal>
       <Reveal className="mt-8">
-        <div className="-mx-6 overflow-x-auto px-6 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <div className="flex w-max snap-x snap-mandatory gap-5">
-            {items.map((item) => (
-              <a
-                key={item.image}
-                href={item.href}
-                target="_blank"
-                rel="noreferrer"
-                className="group relative block h-64 w-80 shrink-0 snap-start overflow-hidden rounded-2xl border border-line bg-paper/40 shadow-[0_18px_40px_-24px_rgba(25,21,18,0.35)]"
-              >
-                <img
-                  src={item.image}
-                  alt={item.title}
-                  loading="lazy"
-                  draggable={false}
-                  className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                />
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 bg-gradient-to-t from-ink/70 via-ink/25 to-transparent p-4 pt-10">
-                  <p className="text-sm font-medium text-paper">{item.title}</p>
-                  <span className="flex shrink-0 items-center gap-1 rounded-full bg-paper/85 px-2.5 py-1 text-[0.7rem] font-medium text-ink backdrop-blur-sm">
-                    <ArrowUpRight className="size-3" aria-hidden="true" />
-                    Source
-                  </span>
-                </div>
-              </a>
-            ))}
-          </div>
+        <div className="h-[68vh] min-h-[480px] w-full">
+          <WorksWheel
+            items={items}
+            label="Haze watch"
+            action="Source"
+            showIndex={false}
+            className="bg-transparent"
+          />
         </div>
       </Reveal>
     </section>
