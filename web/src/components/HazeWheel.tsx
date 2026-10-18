@@ -17,10 +17,10 @@ const FALLBACKS: Record<string, WorksWheelItem[]> = {
       href: "https://commons.wikimedia.org/wiki/File:2026_haze_in_Singapore_20261005_183229.jpg",
     },
     {
-      title: "Haze over Singapore",
+      title: "Haze over Singapore — Oct 2026",
       image:
-        "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/Haze_Singapore_%2822319169378%29.jpg/1280px-Haze_Singapore_%2822319169378%29.jpg",
-      href: "https://commons.wikimedia.org/wiki/File:Haze_Singapore_(22319169378).jpg",
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/2026_haze_in_Singapore_20261005_183224.jpg/1280px-2026_haze_in_Singapore_20261005_183224.jpg",
+      href: "https://commons.wikimedia.org/wiki/File:2026_haze_in_Singapore_20261005_183224.jpg",
     },
     {
       title: "Sun through haze — Bukit Timah",
@@ -56,7 +56,7 @@ type CommonsPage = {
   imageinfo?: { thumburl?: string; descriptionurl?: string; timestamp?: string }[];
 };
 
-type HazeImage = WorksWheelItem & { uploadedAt: number };
+type HazeImage = WorksWheelItem & { uploadedAt: number; matchText: string };
 
 async function searchCommons(
   query: string,
@@ -74,24 +74,31 @@ async function searchCommons(
   for (const p of Object.values(pages)) {
     const info = p.imageinfo?.[0];
     if (!info?.thumburl) continue;
-    const title = (p.title ?? "Haze")
+    // Clean the full title first — filtering runs on the whole thing, so a
+    // long title never loses its city/keyword to the display slice.
+    const cleaned = (p.title ?? "Haze")
       .replace(/^File:/, "")
       .replace(/\.[a-z0-9]+$/i, "")
       .replace(/_/g, " ")
       .replace(/\s*\([\d\s]+\)/g, "")
       .replace(/\s*\b\d{8}\b\s*\b\d{6}\b/g, "")
       .replace(/\s{2,}/g, " ")
-      .trim()
-      .slice(0, 42);
+      .trim();
     items.push({
-      title,
+      title: cleaned.slice(0, 42),
       image: info.thumburl,
       href: info.descriptionurl,
       uploadedAt: info.timestamp ? +new Date(info.timestamp) : 0,
+      matchText: cleaned.toLowerCase(),
     });
   }
   return items;
 }
+
+/** The wheel reads best with a tight set, and only fresh uploads belong in it. */
+const MAX_ITEMS = 6;
+/** "New" = uploaded within the last 120 days — this haze season, not 2013. */
+const FRESH_DAYS = 120;
 
 /** Images for exactly one location — nothing else. Fetched live on every
     visit (realtime), newest uploads first so the wheel never goes stale, and
@@ -110,15 +117,15 @@ function useHazeImages(location: string): WorksWheelItem[] {
     (async () => {
       try {
         const [haze, smog] = await Promise.all([
-          searchCommons(`${location} haze`, 15),
-          searchCommons(`${location} smog`, 15),
+          searchCommons(`${location} haze`, 25),
+          searchCommons(`${location} smog`, 25),
         ]);
         if (cancelled) return;
         const seen = new Set<string>();
         const matched = [...haze, ...smog].filter((it) => {
           if (seen.has(it.image)) return false;
           seen.add(it.image);
-          const t = it.title.toLowerCase();
+          const t = it.matchText;
           // Only this location — nothing else — and genuinely haze/smog.
           return (
             t.includes(key) && (t.includes("haze") || t.includes("smog"))
@@ -126,16 +133,17 @@ function useHazeImages(location: string): WorksWheelItem[] {
         });
         // Newest uploads first — fresh photos, not decade-old ones.
         matched.sort((a, b) => b.uploadedAt - a.uploadedAt);
-        if (matched.length >= 3) {
+        // Only new uploads make the wheel. If fewer than 3 are fresh, fall
+        // back to the newest available so the wheel never sits empty.
+        const cutoff = Date.now() - FRESH_DAYS * 86400000;
+        const fresh = matched.filter((it) => it.uploadedAt >= cutoff);
+        const pool = (fresh.length >= 3 ? fresh : matched).slice(0, MAX_ITEMS);
+        if (pool.length >= 3) {
           // A deterministic daily rotation: every day the wheel opens on a
           // different slice of the pool, so each single day brings new images.
           const day = Math.floor(Date.now() / 86400000);
-          const offset = day % matched.length;
-          const rotated = [
-            ...matched.slice(offset),
-            ...matched.slice(0, offset),
-          ];
-          setItems(rotated.slice(0, 15));
+          const offset = day % pool.length;
+          setItems([...pool.slice(offset), ...pool.slice(0, offset)]);
         }
       } catch {
         // Keep the curated fallback.
