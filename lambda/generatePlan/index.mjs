@@ -182,7 +182,9 @@ async function generateWithNova({
     `  peak feels-like temperature, and the peak window hours.`,
     `- Line 2 MUST name the single most important action for THIS worker,`,
     `  tied to the peak window hours (e.g. when to rest, how often to drink).`,
-    `- Line 3 MUST be personal to the worker's age${age != null ? ` (${age})` : ""}:`,
+    age != null
+      ? `- Line 3 MUST be personal to the worker's age (${age}):`
+      : `- Line 3 MUST give the second most important action for this worker's job. The worker's age was NOT given — do NOT mention age anywhere in this line:`,
     age != null && age >= 60
       ? `-   older adults overheat faster and feel thirst late — tell them plainly.`
       : age != null && age < 18

@@ -127,7 +127,7 @@ export default function App() {
         age: ageOk ? parsedAge : undefined,
         customOccupation:
           jobType === "Other" ? customOccupation.trim() : undefined,
-        aqi: airQuality?.aqi ?? undefined,
+        aqi: aq?.aqi ?? undefined,
       });
       setPlanResult(result);
     } catch (err) {
