@@ -3,6 +3,7 @@ import {
   CloudSun,
   Droplets,
   Flame,
+  MapPin,
   Sun,
   Thermometer,
   TriangleAlert,
@@ -103,6 +104,9 @@ export default function SafetyCard({
             <p className="mt-2 text-[12px] leading-snug text-ink-soft">
               {aqiBandFor(airQuality.aqi).meaning}
             </p>
+            <p className="mt-1.5 text-[11px] leading-snug text-ink-soft/75">
+              {readingCaption(airQuality.time)}
+            </p>
           </Module>
         )}
         <Module
@@ -171,6 +175,20 @@ export default function SafetyCard({
           numbers are still accurate.
         </p>
       )}
+
+      <Card>
+        <CardLabel icon={MapPin}>Finding you in an emergency</CardLabel>
+        <p className="mt-2 text-[15px] leading-relaxed text-ink-soft">
+          Coming soon: a future Sola will let you choose to share your
+          phone&rsquo;s location during a shift, so help can find you after an
+          accident. It will always be opt-in — Sola doesn&rsquo;t track anyone
+          today.
+        </p>
+      </Card>
+
+      <p className="pt-1 text-center text-[12px] text-ink-soft">
+        Weather &amp; air data: Open-Meteo, fetched fresh for this plan.
+      </p>
     </div>
   );
 }
@@ -394,6 +412,16 @@ function NeedScale({ level }: { level: number }) {
       />
     </div>
   );
+}
+
+/** "Open-Meteo · 2:30 PM reading" from the API's ISO local time, when present. */
+function readingCaption(iso: string | null): string {
+  if (!iso) return "Live reading · Open-Meteo";
+  const m = iso.match(/T(\d{2}):(\d{2})/);
+  if (!m) return "Live reading · Open-Meteo";
+  const h24 = Number(m[1]);
+  const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+  return `Open-Meteo · ${h12}:${m[2]} ${h24 < 12 ? "AM" : "PM"} reading`;
 }
 
 function AqiScale({ aqi }: { aqi: number }) {

@@ -27,7 +27,12 @@ export type Band = {
 };
 
 /** Live air-quality reading for a location (US AQI + PM2.5). */
-export type AirQuality = { aqi: number; pm25: number | null };
+export type AirQuality = {
+  aqi: number;
+  pm25: number | null;
+  /** ISO local reading time from the API, e.g. "2026-10-20T14:30". */
+  time: string | null;
+};
 
 /** AQI band: worker-readable label, plain meaning, and a semantic tone. */
 export type AqiBand = { label: string; meaning: string; tone: HeatTone };
@@ -102,8 +107,13 @@ export async function fetchAirQuality(
     const data = await res.json();
     const aqi = data?.current?.us_aqi;
     const pm25 = data?.current?.pm2_5;
+    const time = data?.current?.time;
     if (!Number.isFinite(aqi)) return null;
-    return { aqi, pm25: Number.isFinite(pm25) ? pm25 : null };
+    return {
+      aqi,
+      pm25: Number.isFinite(pm25) ? pm25 : null,
+      time: typeof time === "string" ? time : null,
+    };
   } catch {
     return null;
   }

@@ -31,6 +31,8 @@ import HazeWheel from "./components/HazeWheel";
 const JOB_TYPES = [
   "Delivery rider",
   "Construction worker",
+  "Agricultural worker",
+  "Outdoor maintenance worker",
   "Street vendor",
   "Other",
 ];
@@ -264,6 +266,10 @@ export default function App() {
                 onChange={setAge}
                 placeholder="e.g. 65"
               />
+              <p className="-mt-3 text-[12px] leading-snug text-ink-soft">
+                Heat hits younger and older workers harder — add your age and
+                the plan adjusts rest and hydration for it. Never stored.
+              </p>
               <FieldRow>
                 <TimeField
                   label="Shift start"
