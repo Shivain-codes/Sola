@@ -193,7 +193,9 @@ async function generateWithNova({
     `- Line 4 MUST react to today's air:`,
     aqi != null && aqi > 100
       ? `-   haze is ${aqiLabel(aqi)} (AQI ${aqi}) — give mask/breathing guidance.`
-      : `-   use today's peak humidity (${peakHumidity}%): if humid, warn that sweat won't cool them; if dry, remind them they dehydrate without feeling it.`,
+      : aqi != null
+        ? `-   air quality is ${aqiLabel(aqi)} (AQI ${aqi}) — state plainly that the air is okay today and no mask is needed.`
+        : `-   use today's peak humidity (${peakHumidity}%): if humid, warn that sweat won't cool them; if dry, remind them they dehydrate without feeling it.`,
     `- timeline: cover the FULL shift (${shiftStart || "start"} to ` +
       `${shiftEnd || "end"}), one block per 1-2 hours. action is Work, Rest, or Hydrate.`,
     `- EVERY timeline note must be specific to that block: cite the feels-like`,
@@ -206,7 +208,7 @@ async function generateWithNova({
         `${age}, rest even if you feel fine — heat hits faster"). Do NOT repeat ` +
         `the same sentence in every block.`
       : null,
-    aqi != null && aqi > 150
+    aqi != null && aqi > 100
       ? `- Haze is unhealthy (AQI ${aqi}): add mask/breathing advice in one ` +
         `timeline note.`
       : null,
