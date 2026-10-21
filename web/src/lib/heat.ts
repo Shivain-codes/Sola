@@ -101,7 +101,7 @@ export async function fetchAirQuality(
   try {
     const url =
       `${AIR_QUALITY_URL}?latitude=${lat}&longitude=${lon}` +
-      `&current=us_aqi,pm2_5`;
+      `&current=us_aqi,pm2_5&timezone=auto`;
     const res = await fetch(url);
     if (!res.ok) return null;
     const data = await res.json();
