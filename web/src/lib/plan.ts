@@ -34,6 +34,8 @@ export async function generatePlan(args: {
   customOccupation?: string;
   /** US AQI at plan time (optional) — lets the plan mention haze. */
   aqi?: number;
+  /** One-line haze early-warning summary (optional) — from NASA FIRMS data. */
+  hazeOutlook?: string;
 }): Promise<PlanResult> {
   if (!PLAN_URL) {
     throw new Error(
@@ -54,6 +56,9 @@ export async function generatePlan(args: {
       : {}),
     ...(typeof args.aqi === "number" && Number.isFinite(args.aqi)
       ? { aqi: Math.round(args.aqi) }
+      : {}),
+    ...(typeof args.hazeOutlook === "string" && args.hazeOutlook
+      ? { hazeOutlook: args.hazeOutlook }
       : {}),
     hourly: args.hours.map((h) => ({
       hour: h.hour,

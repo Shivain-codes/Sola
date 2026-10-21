@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   geocodeCity,
@@ -8,8 +8,16 @@ import {
   type HourlyHeat,
   type AirQuality,
 } from "./lib/heat";
+import {
+  buildHazeOutlook,
+  summarizeHazeOutlook,
+  type HazeOutlook as HazeOutlookData,
+} from "./lib/haze";
 import { generatePlan, type PlanResult } from "./lib/plan";
 import SafetyCard from "./components/SafetyCard";
+// Leaflet is heavy — split it out of the initial bundle; the outlook card
+// only renders after a plan with live fire data exists.
+const HazeOutlook = lazy(() => import("./components/HazeOutlook"));
 import { SolaButton as Button } from "./components/ui/SolaButton";
 import {
   FieldRow,
@@ -51,6 +59,11 @@ export default function App() {
   const [shiftHours, setShiftHours] = useState<HourlyHeat[]>([]);
   const [planResult, setPlanResult] = useState<PlanResult | null>(null);
   const [airQuality, setAirQuality] = useState<AirQuality | null>(null);
+  const [hazeOutlook, setHazeOutlook] = useState<HazeOutlookData | null>(null);
+  const [cityCoords, setCityCoords] = useState<{
+    lat: number;
+    lon: number;
+  } | null>(null);
 
   // Live temperature: debounced feels-like for the typed city, shown with
   // the preload effect while it calculates.
@@ -93,6 +106,8 @@ export default function App() {
     setPlaceName(null);
     setPlanResult(null);
     setAirQuality(null);
+    setHazeOutlook(null);
+    setCityCoords(null);
 
     if (!city.trim()) {
       setError("Enter a city name.");
@@ -104,6 +119,11 @@ export default function App() {
       const geo = await geocodeCity(city.trim());
       const aq = await fetchAirQuality(geo.lat, geo.lon);
       setAirQuality(aq);
+      setCityCoords({ lat: geo.lat, lon: geo.lon });
+      // Live fire-hotspot outlook (NASA FIRMS). Failure-proof: null when no
+      // key, no fires, or any error — the section simply doesn't render.
+      const outlook = await buildHazeOutlook(geo.lat, geo.lon);
+      setHazeOutlook(outlook);
       const hourly = await fetchHourlyHeat(geo.lat, geo.lon);
       const startHour = Number(startTime.slice(0, 2));
       const endHour = Number(endTime.slice(0, 2));
@@ -130,6 +150,7 @@ export default function App() {
         customOccupation:
           jobType === "Other" ? customOccupation.trim() : undefined,
         aqi: aq?.aqi ?? undefined,
+        hazeOutlook: outlook ? summarizeHazeOutlook(outlook) : undefined,
       });
       setPlanResult(result);
     } catch (err) {
@@ -353,6 +374,18 @@ export default function App() {
                 return Number.isFinite(n) && n >= 1 && n <= 120 ? n : undefined;
               })()}
             />
+            {hazeOutlook && cityCoords && (
+              <div className="mt-6">
+                <Suspense fallback={null}>
+                  <HazeOutlook
+                    outlook={hazeOutlook}
+                    cityName={placeName ?? city}
+                    cityLat={cityCoords.lat}
+                    cityLon={cityCoords.lon}
+                  />
+                </Suspense>
+              </div>
+            )}
           </div>
         )}
       </section>

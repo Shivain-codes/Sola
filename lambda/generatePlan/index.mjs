@@ -82,6 +82,12 @@ export const handler = async (event) => {
     Number.isFinite(aqiNum) && aqiNum >= 0 && aqiNum <= 500
       ? Math.round(aqiNum)
       : null;
+  // One-line haze early-warning summary from the frontend (NASA FIRMS).
+  // Treated as untrusted display text: length-capped, never executed.
+  const hazeOutlook =
+    typeof input.hazeOutlook === "string" && input.hazeOutlook.length > 0
+      ? input.hazeOutlook.slice(0, 600)
+      : null;
 
   if (hourly.length === 0) {
     return resp(400, { error: "No hourly heat data provided." });
@@ -104,6 +110,7 @@ export const handler = async (event) => {
       peak,
       peakHumidity,
       aqi,
+      hazeOutlook,
     });
     return resp(200, { plan, source: "ai" });
   } catch (err) {
@@ -127,6 +134,7 @@ async function generateWithNova({
   peak,
   peakHumidity,
   aqi,
+  hazeOutlook,
 }) {
   const table = hourly
     .map(
@@ -142,6 +150,11 @@ async function generateWithNova({
       ? `Haze: no air-quality data.`
       : `Haze: US AQI ${aqi} (${aqiLabel(aqi)}).`;
 
+  const outlookLine =
+    hazeOutlook == null
+      ? `Haze outlook: no live fire data.`
+      : `Haze outlook: ${hazeOutlook}`;
+
   const ageLine =
     age == null
       ? `Worker age: not given.`
@@ -156,6 +169,7 @@ async function generateWithNova({
     `Shift: ${shiftStart || "start"} to ${shiftEnd || "end"}.`,
     ageLine,
     hazeLine,
+    outlookLine,
     ``,
     `Today's hourly heat index for the shift hours only:`,
     table,
@@ -211,6 +225,14 @@ async function generateWithNova({
     aqi != null && aqi > 100
       ? `- Haze is unhealthy (AQI ${aqi}): add mask/breathing advice in one ` +
         `timeline note.`
+      : null,
+    hazeOutlook != null
+      ? `- A haze outlook line is given above (live fire data). If it says ` +
+        `smoke is drifting toward the city, add one short timeline note ` +
+        `telling the worker to watch for haze arriving and to mask up if ` +
+        `the air turns smoky — call the arrival time a rough estimate, ` +
+        `never a promise. If it says smoke is drifting away, say nothing ` +
+        `about it.`
       : null,
     `- warningSigns: exactly 5 heatstroke warning signs, plain words.`,
     `- ifSymptoms: what to do if symptoms appear. Short steps.`,
