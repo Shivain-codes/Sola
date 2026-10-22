@@ -1,8 +1,6 @@
-import { useEffect, useRef } from "react";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
 import { Flame, CircleCheck } from "lucide-react";
 import type { HazeOutlookResult } from "../lib/haze";
+import { HazeMap } from "./HazeMap";
 
 /**
  * Haze early-warning card: live NASA FIRMS fire hotspots on a map,
@@ -23,83 +21,6 @@ export default function HazeOutlook({
   cityLon: number;
 }) {
   const outlook = result.status === "fires" ? result.outlook : null;
-  const mapRef = useRef<HTMLDivElement>(null);
-  const leafletRef = useRef<L.Map | null>(null);
-
-  useEffect(() => {
-    if (!outlook || !mapRef.current) return;
-    if (leafletRef.current) {
-      leafletRef.current.remove();
-      leafletRef.current = null;
-    }
-    const map = L.map(mapRef.current, {
-      scrollWheelZoom: false,
-      attributionControl: true,
-    });
-    leafletRef.current = map;
-    // Esri World Street Map — clean, Google-like cartography, keyless.
-    L.tileLayer(
-      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
-      {
-        maxZoom: 10,
-        attribution: "Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics",
-      },
-    ).addTo(map);
-
-    const pts: L.LatLngExpression[] = [];
-    for (const h of outlook.hotspots) {
-      const p: L.LatLngExpression = [h.lat, h.lon];
-      pts.push(p);
-      L.circleMarker(p, {
-        radius: h.confidence === "h" ? 5 : 3.5,
-        color: h.confidence === "h" ? "#dc2626" : "#f59e0b",
-        weight: 1,
-        fillOpacity: 0.75,
-      }).addTo(map);
-    }
-
-    // City marker (plain circle — no default-icon asset issues).
-    const cityPt: L.LatLngExpression = [cityLat, cityLon];
-    pts.push(cityPt);
-    L.circleMarker(cityPt, {
-      radius: 7,
-      color: "#1d4ed8",
-      weight: 2,
-      fillColor: "#3b82f6",
-      fillOpacity: 0.9,
-    })
-      .addTo(map)
-      .bindTooltip(cityName || "You", { permanent: false });
-
-    // Drift arrow: short line from the fire centroid along the drift heading.
-    const rad = (outlook.driftDeg * Math.PI) / 180;
-    const len = 1.2; // degrees, visual only
-    const tip: L.LatLngExpression = [
-      outlook.centroid.lat + len * Math.cos(rad),
-      outlook.centroid.lon + len * Math.sin(rad),
-    ];
-    pts.push(tip);
-    L.polyline(
-      [
-        [outlook.centroid.lat, outlook.centroid.lon],
-        tip,
-      ],
-      { color: "#7c2d12", weight: 3, dashArray: "6 4" }
-    ).addTo(map);
-    L.circleMarker(tip, {
-      radius: 4,
-      color: "#7c2d12",
-      weight: 2,
-      fillOpacity: 0.9,
-    }).addTo(map);
-
-    map.fitBounds(L.latLngBounds(pts).pad(0.25));
-    return () => {
-      map.remove();
-      leafletRef.current = null;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [outlook, cityLat, cityLon]);
 
   if (result.status === "unavailable") return null;
 
@@ -148,7 +69,16 @@ export default function HazeOutlook({
           Haze outlook
         </h3>
       </div>
-      <div ref={mapRef} className="mx-4 mt-3 h-60 rounded-xl" />
+      <div className="mx-4 mt-3 h-60 overflow-hidden rounded-xl border border-line">
+        <HazeMap
+          hotspots={outlook.hotspots}
+          cityLat={cityLat}
+          cityLon={cityLon}
+          cityName={cityName}
+          centroid={outlook.centroid}
+          driftDeg={outlook.driftDeg}
+        />
+      </div>
       <div className="flex flex-col gap-1.5 px-4 py-4">
         <p className="text-[14px] font-medium leading-snug text-ink">
           🔥 {outlook.fireCount} active fire{outlook.fireCount === 1 ? "" : "s"}{" "}
