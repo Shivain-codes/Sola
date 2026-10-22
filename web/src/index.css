@@ -185,3 +185,13 @@
     }
   }
 }
+
+/* Marching-ants drift arrow on the haze map — dashes flow toward the drift tip. */
+@keyframes drift-flow {
+  to {
+    stroke-dashoffset: -10;
+  }
+}
+.animate-drift-flow {
+  animation: drift-flow 0.9s linear infinite;
+}

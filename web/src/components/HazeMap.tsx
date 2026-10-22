@@ -34,11 +34,13 @@ function FireMarker({
   y,
   hot,
   delay,
+  flickerDelay,
 }: {
   x: number;
   y: number;
   hot: boolean;
   delay: number;
+  flickerDelay: number;
 }) {
   return (
     <motion.div
@@ -48,17 +50,28 @@ function FireMarker({
       className="absolute"
       style={{ left: `${x}%`, top: `${y}%` }}
     >
-      <div className="-translate-x-1/2 -translate-y-1/2">
-        <div
-          className={`rounded-full p-1 ${
-            hot
-              ? "bg-d-danger shadow-[0_0_10px_rgba(220,38,38,0.55)]"
-              : "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]"
-          }`}
-        >
-          <Flame className="size-3 text-white" fill="currentColor" />
+      {/* Infinite flicker — keeps the map feeling alive after the drop-in. */}
+      <motion.div
+        animate={{ scale: [1, 1.18, 1], opacity: [1, 0.82, 1] }}
+        transition={{
+          duration: 1.6,
+          repeat: Infinity,
+          delay: flickerDelay,
+          ease: "easeInOut",
+        }}
+      >
+        <div className="-translate-x-1/2 -translate-y-1/2">
+          <div
+            className={`rounded-full p-1 ${
+              hot
+                ? "bg-d-danger shadow-[0_0_10px_rgba(220,38,38,0.55)]"
+                : "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]"
+            }`}
+          >
+            <Flame className="size-3 text-white" fill="currentColor" />
+          </div>
         </div>
-      </div>
+      </motion.div>
     </motion.div>
   );
 }
@@ -134,6 +147,7 @@ export function HazeMap({
           vectorEffect="non-scaling-stroke"
           strokeLinecap="round"
           opacity={0.8}
+          className="animate-drift-flow"
         />
         <circle cx={cTo.x} cy={cTo.y} r={1.6} fill="#7c2d12" opacity={0.9} />
       </svg>
@@ -147,6 +161,7 @@ export function HazeMap({
             y={p.y}
             hot={h.confidence === "h"}
             delay={Math.min(i * 0.025, 1.4)}
+            flickerDelay={(i * 0.37) % 1.6}
           />
         );
       })}
