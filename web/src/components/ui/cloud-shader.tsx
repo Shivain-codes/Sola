@@ -350,16 +350,9 @@ export const CloudShader = ({
     observer.observe(canvas);
     resize();
 
-    // Throttled to ~30fps: the clouds drift slowly, so half the frame rate
-    // is visually identical but halves the GPU cost of this page-tall canvas —
-    // this is what keeps scrolling smooth.
-    let last = 0;
     const draw = (now: number) => {
       if (!running) return;
-      if (now - last >= 33) {
-        last = now;
-        renderFrame(now);
-      }
+      renderFrame(now);
       frame = requestAnimationFrame(draw);
     };
 

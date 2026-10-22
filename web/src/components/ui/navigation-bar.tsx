@@ -10,7 +10,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useScrollTo } from "@/components/ui/SmoothScroll";
 
 // Navigation links for Sola — smooth-scroll to page sections.
 const navigationLinks = [
@@ -18,8 +17,12 @@ const navigationLinks = [
   { id: "why", label: "Why it matters" },
 ];
 
+const scrollTo = (id: string) => (e: React.MouseEvent) => {
+  e.preventDefault();
+  document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+};
+
 export default function NavigationBar() {
-  const scrollTo = useScrollTo();
   return (
     <header className="px-4 md:px-6">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4">
