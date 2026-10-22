@@ -77,6 +77,7 @@ export function HazeMap({
     const map = L.map(mapRef.current, {
       scrollWheelZoom: false,
       attributionControl: true,
+      zoomControl: false, // keep the clean 21st.dev-style chrome-less look
     });
     leafletRef.current = map;
 
