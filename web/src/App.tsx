@@ -11,7 +11,8 @@ import {
 import {
   buildHazeOutlook,
   summarizeHazeOutlook,
-  type HazeOutlook as HazeOutlookData,
+  summarizeClearOutlook,
+  type HazeOutlookResult,
 } from "./lib/haze";
 import { generatePlan, type PlanResult } from "./lib/plan";
 import SafetyCard from "./components/SafetyCard";
@@ -59,7 +60,7 @@ export default function App() {
   const [shiftHours, setShiftHours] = useState<HourlyHeat[]>([]);
   const [planResult, setPlanResult] = useState<PlanResult | null>(null);
   const [airQuality, setAirQuality] = useState<AirQuality | null>(null);
-  const [hazeOutlook, setHazeOutlook] = useState<HazeOutlookData | null>(null);
+  const [hazeResult, setHazeResult] = useState<HazeOutlookResult | null>(null);
   const [cityCoords, setCityCoords] = useState<{
     lat: number;
     lon: number;
@@ -106,7 +107,7 @@ export default function App() {
     setPlaceName(null);
     setPlanResult(null);
     setAirQuality(null);
-    setHazeOutlook(null);
+    setHazeResult(null);
     setCityCoords(null);
 
     if (!city.trim()) {
@@ -120,10 +121,10 @@ export default function App() {
       const aq = await fetchAirQuality(geo.lat, geo.lon);
       setAirQuality(aq);
       setCityCoords({ lat: geo.lat, lon: geo.lon });
-      // Live fire-hotspot outlook (NASA FIRMS). Failure-proof: null when no
-      // key, no fires, or any error — the section simply doesn't render.
-      const outlook = await buildHazeOutlook(geo.lat, geo.lon);
-      setHazeOutlook(outlook);
+      // Live fire-hotspot outlook (NASA FIRMS). "clear" (no fires) also
+      // renders — only "unavailable" (no key / fetch failed) hides.
+      const haze = await buildHazeOutlook(geo.lat, geo.lon);
+      setHazeResult(haze);
       const hourly = await fetchHourlyHeat(geo.lat, geo.lon);
       const startHour = Number(startTime.slice(0, 2));
       const endHour = Number(endTime.slice(0, 2));
@@ -150,7 +151,12 @@ export default function App() {
         customOccupation:
           jobType === "Other" ? customOccupation.trim() : undefined,
         aqi: aq?.aqi ?? undefined,
-        hazeOutlook: outlook ? summarizeHazeOutlook(outlook) : undefined,
+        hazeOutlook:
+          haze.status === "fires"
+            ? summarizeHazeOutlook(haze.outlook)
+            : haze.status === "clear"
+              ? summarizeClearOutlook()
+              : undefined,
       });
       setPlanResult(result);
     } catch (err) {
@@ -374,11 +380,11 @@ export default function App() {
                 return Number.isFinite(n) && n >= 1 && n <= 120 ? n : undefined;
               })()}
             />
-            {hazeOutlook && cityCoords && (
+            {hazeResult && hazeResult.status !== "unavailable" && cityCoords && (
               <div className="mt-6">
                 <Suspense fallback={null}>
                   <HazeOutlook
-                    outlook={hazeOutlook}
+                    result={hazeResult}
                     cityName={placeName ?? city}
                     cityLat={cityCoords.lat}
                     cityLon={cityCoords.lon}

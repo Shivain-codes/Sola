@@ -133,16 +133,29 @@ export function parseFirmsCsv(csv: string): FireHotspot[] {
 }
 
 /**
- * Build the full haze outlook for a city. Returns null when there is no
- * FIRMS key, no hotspots, or any fetch fails — the UI then hides the section.
+ * Result of the haze check:
+ * - "fires": live hotspots found (full outlook).
+ * - "clear": check succeeded, zero hotspots — UI shows the all-clear card.
+ * - "unavailable": no FIRMS key or fetch failed — UI hides the section
+ *   entirely rather than claim anything.
+ */
+export type HazeOutlookResult =
+  | { status: "fires"; outlook: HazeOutlook }
+  | { status: "clear" }
+  | { status: "unavailable" };
+
+/**
+ * Build the haze outlook for a city. Never throws and never invents data:
+ * "clear" means we checked and found nothing; "unavailable" means we could
+ * not check at all.
  */
 export async function buildHazeOutlook(
   cityLat: number,
   cityLon: number
-): Promise<HazeOutlook | null> {
+): Promise<HazeOutlookResult> {
   try {
     const key = import.meta.env.VITE_FIRMS_KEY as string | undefined;
-    if (!key) return null;
+    if (!key) return { status: "unavailable" };
 
     const w = cityLon - BOX_HALF_DEG;
     const s = cityLat - BOX_HALF_DEG;
@@ -152,9 +165,9 @@ export async function buildHazeOutlook(
       `${FIRMS_URL}/${encodeURIComponent(key)}/VIIRS_SNPP_NRT/` +
       `${w},${s},${e},${n}/1`;
     const res = await fetch(url);
-    if (!res.ok) return null;
+    if (!res.ok) return { status: "unavailable" };
     const hotspots = parseFirmsCsv(await res.text());
-    if (hotspots.length === 0) return null;
+    if (hotspots.length === 0) return { status: "clear" };
 
     // Centroid of all detections.
     const centroid = {
@@ -167,12 +180,12 @@ export async function buildHazeOutlook(
       `${WIND_URL}?latitude=${centroid.lat}&longitude=${centroid.lon}` +
         `&current=wind_speed_10m,wind_direction_10m&timezone=auto`
     );
-    if (!wres.ok) return null;
+    if (!wres.ok) return { status: "unavailable" };
     const wdata = await wres.json();
     const windKmh = Number(wdata?.current?.wind_speed_10m);
     const windFromDeg = Number(wdata?.current?.wind_direction_10m);
     if (!Number.isFinite(windKmh) || !Number.isFinite(windFromDeg))
-      return null;
+      return { status: "unavailable" };
 
     // Smoke travels downwind: opposite of where the wind comes FROM.
     const driftDeg = (windFromDeg + 180) % 360;
@@ -194,25 +207,28 @@ export async function buildHazeOutlook(
       windKmh >= 3 ? distanceKm / windKmh : null;
 
     return {
-      fireCount: hotspots.length,
-      hotspots: hotspots.slice(0, MAP_CAP),
-      centroid,
-      windKmh: Math.round(windKmh * 10) / 10,
-      windFromDeg: Math.round(windFromDeg),
-      driftDeg: Math.round(driftDeg),
-      driftCompass: compass16(driftDeg),
-      distanceKm: Math.round(distanceKm),
-      bearingToCityDeg: Math.round(bearingToCityDeg),
-      headingTowardCity,
-      etaHours: etaHours == null ? null : Math.round(etaHours),
-      fetchedAt: new Date().toISOString(),
+      status: "fires",
+      outlook: {
+        fireCount: hotspots.length,
+        hotspots: hotspots.slice(0, MAP_CAP),
+        centroid,
+        windKmh: Math.round(windKmh * 10) / 10,
+        windFromDeg: Math.round(windFromDeg),
+        driftDeg: Math.round(driftDeg),
+        driftCompass: compass16(driftDeg),
+        distanceKm: Math.round(distanceKm),
+        bearingToCityDeg: Math.round(bearingToCityDeg),
+        headingTowardCity,
+        etaHours: etaHours == null ? null : Math.round(etaHours),
+        fetchedAt: new Date().toISOString(),
+      },
     };
   } catch {
-    return null;
+    return { status: "unavailable" };
   }
 }
 
-/** One-line summary for the AI plan prompt (Lambda). */
+/** One-line summary for the AI plan prompt (Lambda) — fires case. */
 export function summarizeHazeOutlook(o: HazeOutlook): string {
   const dir = o.headingTowardCity
     ? `drifting ${o.driftCompass} toward the city`
@@ -226,5 +242,13 @@ export function summarizeHazeOutlook(o: HazeOutlook): string {
     `hotspot(s) centered ~${o.distanceKm} km ${compass16(o.bearingToCityDeg)} ` +
     `of the city; smoke ${dir} on ${o.windKmh} km/h winds; ${eta}. ` +
     `Treat the ETA as a rough estimate, not a forecast.`
+  );
+}
+
+/** One-line summary for the AI plan prompt (Lambda) — clear case. */
+export function summarizeClearOutlook(): string {
+  return (
+    `Haze outlook (NASA FIRMS, VIIRS, last 24h): no active fire hotspots ` +
+    `detected in the surrounding region. No incoming haze expected from fires.`
   );
 }

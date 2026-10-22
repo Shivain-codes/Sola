@@ -1,25 +1,28 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { Flame } from "lucide-react";
-import type { HazeOutlook as Outlook } from "../lib/haze";
+import { Flame, CircleCheck } from "lucide-react";
+import type { HazeOutlookResult } from "../lib/haze";
 
 /**
  * Haze early-warning card: live NASA FIRMS fire hotspots on a map,
  * smoke drift direction, and a rough arrival estimate for the city.
- * Renders nothing when there is no outlook (no key / no fires / error).
+ * When the check succeeds and finds no fires, shows a compact all-clear
+ * card instead. Renders nothing when the check could not run at all
+ * (no key / fetch failed) — never claims anything unverified.
  */
 export default function HazeOutlook({
-  outlook,
+  result,
   cityName,
   cityLat,
   cityLon,
 }: {
-  outlook: Outlook | null;
+  result: HazeOutlookResult;
   cityName: string;
   cityLat: number;
   cityLon: number;
 }) {
+  const outlook = result.status === "fires" ? result.outlook : null;
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletRef = useRef<L.Map | null>(null);
 
@@ -93,6 +96,35 @@ export default function HazeOutlook({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [outlook, cityLat, cityLon]);
+
+  if (result.status === "unavailable") return null;
+
+  // All-clear: the check ran fine and found no fires. Compact card —
+  // no map, nothing to map.
+  if (result.status === "clear") {
+    return (
+      <section className="overflow-hidden rounded-2xl bg-white shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
+        <div className="flex items-center gap-2 px-4 pt-4">
+          <Flame className="h-4 w-4 text-d-hot" />
+          <h3 className="font-display text-[15px] font-semibold text-ink">
+            Haze outlook
+          </h3>
+        </div>
+        <div className="flex flex-col gap-1.5 px-4 py-4">
+          <p className="flex items-center gap-1.5 text-[14px] font-medium leading-snug text-ink">
+            <CircleCheck className="h-4 w-4 text-d-safe" />
+            No active fire hotspots nearby in the last 24h
+          </p>
+          <p className="text-[13px] leading-snug text-ink-soft">
+            No incoming haze expected from fires{cityName ? ` around ${cityName}` : ""}.
+          </p>
+          <p className="mt-1 text-[11px] leading-snug text-ink-soft/75">
+            Checked just now · Fire data: NASA FIRMS (VIIRS Suomi-NPP).
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   if (!outlook) return null;
 
