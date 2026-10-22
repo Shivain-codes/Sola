@@ -37,10 +37,14 @@ export default function HazeOutlook({
       attributionControl: true,
     });
     leafletRef.current = map;
-    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 10,
-      attribution: "© OpenStreetMap contributors",
-    }).addTo(map);
+    // Esri World Street Map — clean, Google-like cartography, keyless.
+    L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+      {
+        maxZoom: 10,
+        attribution: "Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics",
+      },
+    ).addTo(map);
 
     const pts: L.LatLngExpression[] = [];
     for (const h of outlook.hotspots) {

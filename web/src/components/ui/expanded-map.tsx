@@ -19,8 +19,9 @@ interface LocationMapProps {
   zoom?: number;
   /** Additional CSS classes */
   className?: string;
-  /** Map tile provider — openstreetmap is keyless; carto now needs an API key */
-  tileProvider?: "openstreetmap" | "carto-light" | "carto-dark";
+  /** Map tile provider — esri is the prettiest keyless option (Google-like);
+   *  openstreetmap is the fallback. (Carto now needs an API key.) */
+  tileProvider?: "openstreetmap" | "carto-light" | "carto-dark" | "esri";
   /** Whether the card starts expanded */
   defaultExpanded?: boolean;
 }
@@ -36,9 +37,12 @@ function latLngToTile(lat: number, lng: number, zoom: number) {
   return { x, y };
 }
 
-// Get tile URL based on provider (all keyless)
+// Get tile URL based on provider (all keyless except carto, which is legacy)
 function getTileUrl(provider: string, x: number, y: number, z: number) {
   switch (provider) {
+    case "esri":
+      // NOTE: Esri uses {z}/{y}/{x} order.
+      return `https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/${z}/${y}/${x}.png`;
     case "carto-light":
       return `https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/${z}/${x}/${y}.png`;
     case "carto-dark":
@@ -61,7 +65,7 @@ export function LocationMap({
   longitude = -122.4194,
   zoom = 14,
   className,
-  tileProvider = "openstreetmap",
+  tileProvider = "esri",
   defaultExpanded = false,
 }: LocationMapProps) {
   const [isHovered, setIsHovered] = useState(false);
