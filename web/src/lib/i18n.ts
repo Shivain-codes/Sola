@@ -29,7 +29,7 @@ type Key =
   | "langLabel" | "langAuto" | "emgYourLocation";
 
 const en: Record<Key, string> = {
-  emgTitle: "🚨 In an emergency",
+  emgTitle: "In an emergency",
   emgDesc:
     "One tap sends your live GPS location to whoever you choose — so someone can find you. Nothing is tracked or stored.",
   emgShare: "Share my location now",
@@ -63,7 +63,7 @@ const en: Record<Key, string> = {
 const STRINGS: Record<LangCode, Record<Key, string>> = {
   en,
   hi: {
-    emgTitle: "🚨 आपातकाल में",
+    emgTitle: "आपातकाल में",
     emgDesc:
       "एक टैप में आपकी लाइव GPS लोकेशन आपके चुने हुए व्यक्ति को भेजी जाएगी — ताकि कोई आपको ढूंढ सके। कुछ भी ट्रैक या स्टोर नहीं होता।",
     emgShare: "अभी मेरी लोकेशन शेयर करें",
@@ -94,7 +94,7 @@ const STRINGS: Record<LangCode, Record<Key, string>> = {
     langAuto: "आपके डिवाइस से स्वतः पहचानी गई",
   },
   ta: {
-    emgTitle: "🚨 அவசர நிலையில்",
+    emgTitle: "அவசர நிலையில்",
     emgDesc:
       "ஒரே தட்டலில் உங்கள் நேரடி GPS இருப்பிடம் நீங்கள் தேர்ந்த நபருக்கு அனுப்பப்படும் — யாராவது உங்களைக் கண்டுபிடிக்க. எதுவும் கண்காணிக்கவோ சேமிக்கவோ படாது.",
     emgShare: "என் இருப்பிடத்தை இப்போது பகிர்",
@@ -125,7 +125,7 @@ const STRINGS: Record<LangCode, Record<Key, string>> = {
     langAuto: "உங்கள் சாதனத்திலிருந்து தானாகக் கண்டறியப்பட்டது",
   },
   bn: {
-    emgTitle: "🚨 জরুরি অবস্থায়",
+    emgTitle: "জরুরি অবস্থায়",
     emgDesc:
       "এক ট্যাপে আপনার লাইভ GPS অবস্থান আপনার পছন্দের ব্যক্তির কাছে পাঠানো হবে — যাতে কেউ আপনাকে খুঁজে পায়। কিছুই ট্র্যাক বা সংরক্ষণ করা হয় না।",
     emgShare: "এখনই আমার অবস্থান শেয়ার করুন",
@@ -156,7 +156,7 @@ const STRINGS: Record<LangCode, Record<Key, string>> = {
     langAuto: "আপনার ডিভাইস থেকে স্বয়ংক্রিয়ভাবে শনাক্ত",
   },
   zh: {
-    emgTitle: "🚨 紧急情况",
+    emgTitle: "紧急情况",
     emgDesc:
       "一键将您的实时 GPS 位置发送给您选择的人——以便有人能找到您。不会追踪或存储任何信息。",
     emgShare: "立即分享我的位置",
@@ -184,7 +184,7 @@ const STRINGS: Record<LangCode, Record<Key, string>> = {
     langAuto: "已从您的设备自动识别",
   },
   ms: {
-    emgTitle: "🚨 Dalam kecemasan",
+    emgTitle: "Dalam kecemasan",
     emgDesc:
       "Satu ketikan menghantar lokasi GPS langsung anda kepada orang pilihan anda — supaya seseorang boleh menemui anda. Tiada apa yang dijejak atau disimpan.",
     emgShare: "Kongsi lokasi saya sekarang",
@@ -215,7 +215,7 @@ const STRINGS: Record<LangCode, Record<Key, string>> = {
     langAuto: "Dikesan automatik daripada peranti anda",
   },
   th: {
-    emgTitle: "🚨 ในกรณีฉุกเฉิน",
+    emgTitle: "ในกรณีฉุกเฉิน",
     emgDesc:
       "แตะครั้งเดียวเพื่อส่งตำแหน่ง GPS สดของคุณไปยังคนที่คุณเลือก — เพื่อให้มีคนหาคุณเจอ ไม่มีการติดตามหรือจัดเก็บใดๆ",
     emgShare: "แชร์ตำแหน่งของฉันเลย",
@@ -245,7 +245,7 @@ const STRINGS: Record<LangCode, Record<Key, string>> = {
     langAuto: "ตรวจจับอัตโนมัติจากอุปกรณ์ของคุณ",
   },
   vi: {
-    emgTitle: "🚨 Trong trường hợp khẩn cấp",
+    emgTitle: "Trong trường hợp khẩn cấp",
     emgDesc:
       "Một chạm để gửi vị trí GPS trực tiếp của bạn cho người bạn chọn — để ai đó có thể tìm thấy bạn. Không theo dõi hay lưu trữ gì cả.",
     emgShare: "Chia sẻ vị trí của tôi ngay",
@@ -276,7 +276,7 @@ const STRINGS: Record<LangCode, Record<Key, string>> = {
     langAuto: "Tự động nhận diện từ thiết bị của bạn",
   },
   id: {
-    emgTitle: "🚨 Dalam keadaan darurat",
+    emgTitle: "Dalam keadaan darurat",
     emgDesc:
       "Satu ketukan mengirim lokasi GPS langsung Anda ke orang pilihan Anda — agar seseorang bisa menemukan Anda. Tidak ada yang dilacak atau disimpan.",
     emgShare: "Bagikan lokasi saya sekarang",
@@ -307,7 +307,7 @@ const STRINGS: Record<LangCode, Record<Key, string>> = {
     langAuto: "Terdeteksi otomatis dari perangkat Anda",
   },
   my: {
-    emgTitle: "🚨 အရေးပေါ်အခြေအနေတွင်",
+    emgTitle: "အရေးပေါ်အခြေအနေတွင်",
     emgDesc:
       "တစ်ချက်နှိပ်ရုံနဲ့ သင့်ရဲ့ GPS တည်နေရာအမှန်ကို သင်ရွေးတဲ့သူဆီ ပို့ပေးမယ် — တစ်ယောက်ယောက် သင့်ကိုရှာနိုင်အောင်။ ဘာကိုမှ ခြေရာခံတာ၊ သိမ်းတာမရှိဘူး။",
     emgShare: "ကျွန်တော့်တည်နေရာကို အခုမျှဝေမယ်",

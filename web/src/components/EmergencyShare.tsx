@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import { Siren } from "lucide-react";
 import { tr, fill, type LangCode } from "../lib/i18n";
 import { LocationMap } from "./ui/expanded-map";
+import { SolaButton } from "./ui/SolaButton";
 
 type Props = {
   cityName: string;
@@ -99,9 +101,10 @@ export default function EmergencyShare({ cityName, jobType, lang }: Props) {
   return (
     <section
       aria-label="Emergency location sharing"
-      className="mt-6 rounded-2xl border-2 border-d-danger/60 bg-d-danger/5 p-5"
+      className="mt-6 rounded-2xl border border-line bg-white/80 p-5 sm:p-6"
     >
-      <h3 className="font-display text-base font-semibold text-ink">
+      <h3 className="flex items-center gap-2 font-display text-base font-semibold text-ink">
+        <Siren size={18} strokeWidth={2.25} className="text-d-danger" />
         {tr(lang, "emgTitle")}
       </h3>
       <p className="mt-1 text-[13px] leading-snug text-ink-soft">
@@ -109,13 +112,9 @@ export default function EmergencyShare({ cityName, jobType, lang }: Props) {
       </p>
 
       {phase.kind === "idle" && (
-        <button
-          type="button"
-          onClick={locate}
-          className="mt-4 w-full rounded-xl bg-d-danger px-5 py-3.5 font-display text-[15px] font-semibold text-white shadow-[0_3px_0_rgba(0,0,0,0.9)] transition-transform active:translate-y-0.5"
-        >
+        <SolaButton onClick={locate} className="mt-4">
           {tr(lang, "emgShare")}
-        </button>
+        </SolaButton>
       )}
 
       {phase.kind === "locating" && (
