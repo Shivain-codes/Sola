@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { tr, fill, type LangCode } from "../lib/i18n";
 import { LocationMap } from "./ui/expanded-map";
 
@@ -26,6 +26,17 @@ function isIOS(): boolean {
  */
 export default function EmergencyShare({ cityName, jobType, lang }: Props) {
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
+  const watchId = useRef<number | null>(null);
+
+  function stopWatch() {
+    if (watchId.current != null) {
+      navigator.geolocation.clearWatch(watchId.current);
+      watchId.current = null;
+    }
+  }
+
+  // Stop live tracking when the card unmounts — no background tracking.
+  useEffect(() => stopWatch, []);
 
   function locate() {
     if (!("geolocation" in navigator)) {
@@ -33,7 +44,8 @@ export default function EmergencyShare({ cityName, jobType, lang }: Props) {
       return;
     }
     setPhase({ kind: "locating" });
-    navigator.geolocation.getCurrentPosition(
+    stopWatch();
+    watchId.current = navigator.geolocation.watchPosition(
       (pos) =>
         setPhase({
           kind: "ready",
@@ -42,12 +54,21 @@ export default function EmergencyShare({ cityName, jobType, lang }: Props) {
           copied: false,
         }),
       (err) =>
-        setPhase({
-          kind: "failed",
-          reasonKey:
-            err.code === err.PERMISSION_DENIED ? "emgDenied" : "emgFixFail",
-        }),
-      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 },
+        setPhase((prev) =>
+          // Keep showing the last known fix if we already have one —
+          // a momentary GPS dropout shouldn't wipe the map.
+          prev.kind === "ready"
+            ? prev
+            : {
+                kind: "failed",
+                reasonKey:
+                  err.code === err.PERMISSION_DENIED
+                    ? "emgDenied"
+                    : "emgFixFail",
+              },
+        ),
+      // maximumAge: 0 — always a fresh fix, never a cached one.
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 },
     );
   }
 
@@ -105,7 +126,14 @@ export default function EmergencyShare({ cityName, jobType, lang }: Props) {
 
       {phase.kind === "ready" && (
         <div className="mt-4">
-          <div className="flex justify-center">
+          <div className="relative flex justify-center">
+            <span className="absolute top-2 left-1/2 z-30 -translate-x-1/2 inline-flex items-center gap-1.5 rounded-full bg-d-danger px-2.5 py-1 font-display text-[10px] font-semibold tracking-widest text-white uppercase">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
+              </span>
+              Live
+            </span>
             <LocationMap
               location={tr(lang, "emgYourLocation")}
               latitude={phase.lat}
