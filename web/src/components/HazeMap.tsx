@@ -124,6 +124,21 @@ export function HazeMap({
   const cTo = project(tip.lat, tip.lon, bounds);
   const cCity = project(cityLat, cityLon, bounds);
 
+  // Arrowhead triangle at the drift tip, pointing in the drift direction.
+  // driftDeg: degrees clockwise from north → screen vector (x right, y down).
+  const dRad = (driftDeg * Math.PI) / 180;
+  const ddx = Math.sin(dRad);
+  const ddy = -Math.cos(dRad);
+  const px = Math.cos(dRad);
+  const py = Math.sin(dRad);
+  const AL = 2.4;
+  const AW = 1.5;
+  const arrowPts = [
+    `${cTo.x},${cTo.y}`,
+    `${cTo.x - AL * ddx + AW * px},${cTo.y - AL * ddy + AW * py}`,
+    `${cTo.x - AL * ddx - AW * px},${cTo.y - AL * ddy - AW * py}`,
+  ].join(" ");
+
   return (
     <div aria-hidden="true" className="relative size-full overflow-hidden">
       {/* Dotted halftone map generated from the REAL region geography */}
@@ -147,7 +162,7 @@ export function HazeMap({
           opacity={0.85}
           className="animate-drift-flow"
         />
-        <circle cx={cTo.x} cy={cTo.y} r={1.6} fill="#7c2d12" opacity={0.9} />
+        <polygon points={arrowPts} fill="#7c2d12" opacity={0.9} />
       </svg>
       {/* Fire pins */}
       {shown.map((h, i) => {
