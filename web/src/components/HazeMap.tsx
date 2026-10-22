@@ -82,11 +82,12 @@ export function HazeMap({
     leafletRef.current = map;
 
     // Esri World Street Map — real country/city geography, keyless.
-    // Automatically shows Singapore's structure for Singapore, etc.
+    // Slightly faded so the dot-screen print texture reads as the aesthetic.
     L.tileLayer(
       "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
       {
         maxZoom: 12,
+        opacity: 0.6,
         attribution: "Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics",
       },
     ).addTo(map);
@@ -145,7 +146,14 @@ export function HazeMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return <div ref={mapRef} className="size-full" />;
+  return (
+    <div className="relative size-full">
+      <div ref={mapRef} className="size-full" />
+      {/* Dot-screen print texture over the real geography — sits above tiles
+          and the drift line, below the markers. */}
+      <div className="haze-dots pointer-events-none absolute inset-0 z-[500]" />
+    </div>
+  );
 }
 
 export default HazeMap;

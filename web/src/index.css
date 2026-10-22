@@ -273,3 +273,9 @@
   stroke-dasharray: 6 4;
   animation: drift-flow 0.9s linear infinite;
 }
+
+/* Dot-screen print texture for the haze map — dotted aesthetic over real geography. */
+.haze-dots {
+  background-image: radial-gradient(circle, rgba(25, 21, 18, 0.16) 1.2px, transparent 1.3px);
+  background-size: 7px 7px;
+}
