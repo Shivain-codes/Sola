@@ -1,80 +1,49 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Flame } from "lucide-react";
+import { useEffect, useRef } from "react";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import type { FireHotspot } from "../lib/haze";
 
 /**
- * Haze fire map in the 21st.dev animated style: stylized map backdrop,
- * fire-hotspot markers that drop in with a stagger, city pin, and a
- * dashed drift arrow. Marker positions are projected from the REAL
- * hotspot/city coordinates (bbox-normalized), so relative geography
- * stays truthful — only the cartography is illustrative.
+ * Haze fire map: REAL geography (Leaflet + Esri tiles) so the map shows
+ * the actual country's structure — Singapore looks like Singapore, Delhi
+ * like Delhi — automatically, wherever the city is. Markers are animated
+ * via CSS (drop-in stagger + infinite flame flicker, flowing drift arrow).
  */
 
 /** Cap animated markers for perf — the card text still reports the true total. */
 const MARKER_CAP = 60;
 
-const BACKDROP_URL =
-  "https://cdn.21st.dev/assets/localized/f2a04222035a445668558f781cecc04117ed2be06b3cc84f223ed8d64e00e44e.png";
+const FLAME_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="14" height="14"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>';
 
-function project(
-  lat: number,
-  lon: number,
-  bounds: { minLat: number; maxLat: number; minLon: number; maxLon: number },
-) {
-  const x =
-    ((lon - bounds.minLon) / (bounds.maxLon - bounds.minLon)) * 100;
-  const y =
-    ((bounds.maxLat - lat) / (bounds.maxLat - bounds.minLat)) * 100;
-  return { x, y };
+function fireIcon(hot: boolean, delay: number, flickerDelay: number) {
+  return L.divIcon({
+    className: "haze-marker",
+    html:
+      `<div class="haze-drop" style="animation-delay:${delay.toFixed(2)}s">` +
+      `<div class="haze-flicker" style="animation-delay:${flickerDelay.toFixed(2)}s">` +
+      `<div class="haze-flame ${hot ? "hot" : "nom"}">${FLAME_SVG}</div>` +
+      `</div></div>`,
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+  });
 }
 
-function FireMarker({
-  x,
-  y,
-  hot,
-  delay,
-  flickerDelay,
-}: {
-  x: number;
-  y: number;
-  hot: boolean;
-  delay: number;
-  flickerDelay: number;
-}) {
-  return (
-    <motion.div
-      initial={{ scale: 0, opacity: 0, y: -16 }}
-      animate={{ scale: 1, opacity: 1, y: 0 }}
-      transition={{ type: "spring", stiffness: 380, damping: 16, delay }}
-      className="absolute"
-      style={{ left: `${x}%`, top: `${y}%` }}
-    >
-      {/* Infinite flicker — keeps the map feeling alive after the drop-in. */}
-      <motion.div
-        animate={{ scale: [1, 1.18, 1], opacity: [1, 0.82, 1] }}
-        transition={{
-          duration: 1.6,
-          repeat: Infinity,
-          delay: flickerDelay,
-          ease: "easeInOut",
-        }}
-      >
-        <div className="-translate-x-1/2 -translate-y-1/2">
-          <div
-            className={`rounded-full p-1 ${
-              hot
-                ? "bg-d-danger shadow-[0_0_10px_rgba(220,38,38,0.55)]"
-                : "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]"
-            }`}
-          >
-            <Flame className="size-3 text-white" fill="currentColor" />
-          </div>
-        </div>
-      </motion.div>
-    </motion.div>
-  );
+function cityIcon(cityName: string) {
+  return L.divIcon({
+    className: "haze-marker",
+    html:
+      `<div class="haze-drop" style="animation-delay:0.1s">` +
+      `<div class="haze-city"><span class="haze-city-ping"></span><span class="haze-city-dot"></span></div>` +
+      (cityName
+        ? `<div class="haze-city-label">${cityName.replace(/</g, "&lt;")}</div>`
+        : "") +
+      `</div>`,
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+  });
 }
 
 export function HazeMap({
@@ -92,100 +61,90 @@ export function HazeMap({
   centroid: { lat: number; lon: number };
   driftDeg: number;
 }) {
-  // High-confidence fires first, then cap the animated markers.
-  const shown = [...hotspots]
-    .sort((a, b) => (a.confidence === b.confidence ? 0 : a.confidence === "h" ? -1 : 1))
-    .slice(0, MARKER_CAP);
+  const mapRef = useRef<HTMLDivElement>(null);
+  const leafletRef = useRef<L.Map | null>(null);
+  // Keep latest props for the effect without re-creating the map on every render.
+  const propsRef = useRef({ hotspots, cityLat, cityLon, cityName, centroid, driftDeg });
+  propsRef.current = { hotspots, cityLat, cityLon, cityName, centroid, driftDeg };
 
-  // Drift tip in lat/lon (same math as the old Leaflet arrow).
-  const rad = (driftDeg * Math.PI) / 180;
-  const tip = {
-    lat: centroid.lat + 1.2 * Math.cos(rad),
-    lon: centroid.lon + 1.2 * Math.sin(rad),
-  };
+  useEffect(() => {
+    if (!mapRef.current) return;
+    if (leafletRef.current) {
+      leafletRef.current.remove();
+      leafletRef.current = null;
+    }
+    const p = propsRef.current;
+    const map = L.map(mapRef.current, {
+      scrollWheelZoom: false,
+      attributionControl: true,
+    });
+    leafletRef.current = map;
 
-  const lats = [...shown.map((h) => h.lat), cityLat, tip.lat];
-  const lons = [...shown.map((h) => h.lon), cityLon, tip.lon];
-  const spanLat = Math.max(...lats) - Math.min(...lats);
-  const spanLon = Math.max(...lons) - Math.min(...lons);
-  const padLat = spanLat * 0.18 + 0.05;
-  const padLon = spanLon * 0.18 + 0.05;
-  const bounds = {
-    minLat: Math.min(...lats) - padLat,
-    maxLat: Math.max(...lats) + padLat,
-    minLon: Math.min(...lons) - padLon,
-    maxLon: Math.max(...lons) + padLon,
-  };
+    // Esri World Street Map — real country/city geography, keyless.
+    // Automatically shows Singapore's structure for Singapore, etc.
+    L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+      {
+        maxZoom: 12,
+        attribution: "Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics",
+      },
+    ).addTo(map);
 
-  const cFrom = project(centroid.lat, centroid.lon, bounds);
-  const cTo = project(tip.lat, tip.lon, bounds);
-  const cCity = project(cityLat, cityLon, bounds);
+    const pts: L.LatLngExpression[] = [];
+    const shown = [...p.hotspots]
+      .sort((a, b) =>
+        a.confidence === b.confidence ? 0 : a.confidence === "h" ? -1 : 1,
+      )
+      .slice(0, MARKER_CAP);
+    shown.forEach((h, i) => {
+      const pt: L.LatLngExpression = [h.lat, h.lon];
+      pts.push(pt);
+      L.marker(pt, {
+        icon: fireIcon(
+          h.confidence === "h",
+          Math.min(i * 0.025, 1.4),
+          (i * 0.37) % 1.6,
+        ),
+        interactive: false,
+      }).addTo(map);
+    });
 
-  return (
-    <div aria-hidden="true" className="relative size-full overflow-hidden">
-      <div
-        className="absolute inset-0 mask-[linear-gradient(to_bottom,black_50%,transparent)] bg-no-repeat"
-        style={{
-          backgroundImage: `url(${BACKDROP_URL})`,
-          backgroundSize: "530px 430px",
-          backgroundPosition: "center -75px",
-        }}
-      />
-      {/* Drift arrow */}
-      <svg
-        className="absolute inset-0 h-full w-full"
-        viewBox="0 0 100 100"
-        preserveAspectRatio="none"
-      >
-        <line
-          x1={cFrom.x}
-          y1={cFrom.y}
-          x2={cTo.x}
-          y2={cTo.y}
-          stroke="#7c2d12"
-          strokeWidth={1.2}
-          strokeDasharray="3 2"
-          vectorEffect="non-scaling-stroke"
-          strokeLinecap="round"
-          opacity={0.8}
-          className="animate-drift-flow"
-        />
-        <circle cx={cTo.x} cy={cTo.y} r={1.6} fill="#7c2d12" opacity={0.9} />
-      </svg>
-      {/* Fire markers */}
-      {shown.map((h, i) => {
-        const p = project(h.lat, h.lon, bounds);
-        return (
-          <FireMarker
-            key={`${h.lat}-${h.lon}-${i}`}
-            x={p.x}
-            y={p.y}
-            hot={h.confidence === "h"}
-            delay={Math.min(i * 0.025, 1.4)}
-            flickerDelay={(i * 0.37) % 1.6}
-          />
-        );
-      })}
-      {/* City pin */}
-      <motion.div
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 380, damping: 16, delay: 0.1 }}
-        className="absolute z-10"
-        style={{ left: `${cCity.x}%`, top: `${cCity.y}%` }}
-      >
-        <div className="relative -translate-x-1/2 -translate-y-1/2">
-          <span className="absolute inset-0 animate-ping rounded-full bg-blue-500/40" />
-          <div className="size-4 rounded-full bg-blue-600 ring-2 ring-white" />
-        </div>
-        {cityName && (
-          <span className="absolute top-3 left-2 rounded-md bg-white/85 px-1.5 py-0.5 text-[10px] font-medium whitespace-nowrap text-ink backdrop-blur-sm">
-            {cityName}
-          </span>
-        )}
-      </motion.div>
-    </div>
-  );
+    // City pin.
+    const cityPt: L.LatLngExpression = [p.cityLat, p.cityLon];
+    pts.push(cityPt);
+    L.marker(cityPt, { icon: cityIcon(p.cityName), interactive: false }).addTo(
+      map,
+    );
+
+    // Drift arrow: dashed line from the fire centroid along the drift heading,
+    // with CSS-animated marching dashes showing flow direction.
+    const rad = (p.driftDeg * Math.PI) / 180;
+    const tip: L.LatLngExpression = [
+      p.centroid.lat + 1.2 * Math.cos(rad),
+      p.centroid.lon + 1.2 * Math.sin(rad),
+    ];
+    pts.push(tip);
+    L.polyline(
+      [
+        [p.centroid.lat, p.centroid.lon],
+        tip,
+      ],
+      {
+        color: "#7c2d12",
+        weight: 3,
+        className: "haze-drift",
+      },
+    ).addTo(map);
+
+    map.fitBounds(L.latLngBounds(pts).pad(0.25));
+    return () => {
+      map.remove();
+      leafletRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return <div ref={mapRef} className="size-full" />;
 }
 
 export default HazeMap;
