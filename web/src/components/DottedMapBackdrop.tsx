@@ -59,7 +59,7 @@ function halftone(src: HTMLCanvasElement, cell = 5): HTMLCanvasElement {
   const octx = out.getContext("2d")!;
   octx.fillStyle = "#ffffff";
   octx.fillRect(0, 0, w, h);
-  octx.fillStyle = "#44403c";
+  octx.fillStyle = "#78716c";
   const half = cell / 2;
   for (let cy = 0; cy < h; cy += cell) {
     for (let cx = 0; cx < w; cx += cell) {
@@ -68,8 +68,8 @@ function halftone(src: HTMLCanvasElement, cell = 5): HTMLCanvasElement {
       const i = (py * w + px) * 4;
       const lum = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114) / 255;
       const ink = Math.min(Math.max((lum - 0.87) / 0.09, 0), 1);
-      const r = half * 0.9 * Math.pow(ink, 0.9);
-      if (r < 0.4) continue;
+      const r = half * 0.62 * Math.pow(ink, 0.8);
+      if (r < 0.35) continue;
       octx.beginPath();
       octx.arc(cx + half, cy + half, Math.min(r, half), 0, Math.PI * 2);
       octx.fill();
