@@ -210,12 +210,23 @@ async function generateWithNova({
       : aqi != null
         ? `-   air quality is ${aqiLabel(aqi)} (AQI ${aqi}) — state plainly that the air is okay today and no mask is needed.`
         : `-   use today's peak humidity (${peakHumidity}%): if humid, warn that sweat won't cool them; if dry, remind them they dehydrate without feeling it.`,
-    `- timeline: cover the FULL shift (${shiftStart || "start"} to ` +
-      `${shiftEnd || "end"}), one block per 1-2 hours. action is Work, Rest, or Hydrate.`,
+    `- timeline: cover EXACTLY the shift, ${shiftStart || "start"} to ` +
+      `${shiftEnd || "end"} — one block per 1-2 hours, action is Work, Rest, or Hydrate. ` +
+      `The first block starts at the shift start and the last block ends at the shift end. ` +
+      `NEVER include hours outside this range.`,
     `- EVERY timeline note must be specific to that block: cite the feels-like`,
-    `  temperature for those hours and say exactly what to do. Never write`,
-    `  generic filler like "drink water regularly".`,
-    `- During the peak window, schedule Rest blocks in shade.`,
+    `  temperature for those hours AND one concrete instruction with a quantity.`,
+    `  GOOD: "Feels 43°C 1-3pm: stop work, sit in shade 30 min, drink 500ml water."`,
+    `  NEVER write generic filler: "Work in shaded areas." / "Take a 30-minute`,
+    `  break in the shade." / "Drink water regularly."`,
+    peak != null
+      ? `- PEAK RULE — no exceptions: the peak heat window is ` +
+        `${hourLabel(peak.startHour)}-${hourLabel(peak.endHour)} (feels-like up to ` +
+        `${Math.round(peak.maxHiC)}°C). Every timeline block overlapping these hours ` +
+        `MUST have action "Rest" — NEVER "Work". Working through the peak is how ` +
+        `heatstroke happens.`
+      : `- No dangerous peak window today: distribute Work, Rest and Hydrate ` +
+        `sensibly, with a Rest or Hydrate block at least every 2 hours.`,
     age != null && age >= 60
       ? `- The worker is ${age}: schedule a Rest or Hydrate block at least ` +
         `every hour, and say the age reason plainly in 2-3 notes (e.g. "At ` +
