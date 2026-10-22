@@ -5,7 +5,6 @@ import { spring } from "../ui/motion";
 import { TextRevealInView } from "../ui/text-reveal";
 import NavigationBar from "../ui/navigation-bar";
 import { Footer7 } from "../ui/footer-7";
-import { tr, LANGS, type LangCode } from "../../lib/i18n";
 
 const SCROLL = (id: string) => (e: React.MouseEvent) => {
   e.preventDefault();
@@ -47,55 +46,11 @@ export function CtaBand() {
 
 /* ---------------- Footer + legal modals ---------------- */
 
-/** Slim language-picker strip in the footer. */
-function LanguageStrip({
-  lang,
-  setLang,
-}: {
-  lang: LangCode;
-  setLang: (l: LangCode) => void;
-}) {
-  return (
-    <div className="border-t border-line">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
-        <p className="text-[12px] text-ink-soft">{tr(lang, "langAuto")}</p>
-        <div className="flex items-center gap-2">
-          <label
-            htmlFor="sola-lang"
-            className="text-[12px] font-medium text-ink-soft"
-          >
-            {tr(lang, "langLabel")}
-          </label>
-          <select
-            id="sola-lang"
-            value={lang}
-            onChange={(e) => setLang(e.target.value as LangCode)}
-            className="rounded-lg border border-line bg-paper px-3 py-2 text-sm text-ink"
-          >
-            {LANGS.map((l) => (
-              <option key={l.code} value={l.code}>
-                {l.native}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export function SiteFooter({
-  lang,
-  setLang,
-}: {
-  lang: LangCode;
-  setLang: (l: LangCode) => void;
-}) {
+export function SiteFooter() {
   const [modal, setModal] = useState<null | "privacy" | "terms">(null);
 
   return (
     <footer>
-      <LanguageStrip lang={lang} setLang={setLang} />
       <Footer7
         title="Sola"
         titleHref="#top"

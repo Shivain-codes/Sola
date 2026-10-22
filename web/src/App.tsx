@@ -17,7 +17,7 @@ import {
 import { generatePlan, type PlanResult } from "./lib/plan";
 import SafetyCard from "./components/SafetyCard";
 import EmergencyShare from "./components/EmergencyShare";
-import { detectLanguage, saveLanguage, type LangCode } from "./lib/i18n";
+import { detectLanguage, type LangCode } from "./lib/i18n";
 // Leaflet is heavy — split it out of the initial bundle; the outlook card
 // only renders after a plan with live fire data exists.
 const HazeOutlook = lazy(() => import("./components/HazeOutlook"));
@@ -68,12 +68,8 @@ export default function App() {
     lon: number;
   } | null>(null);
 
-  // Emergency UI language — auto-detected from the device, overridable in footer.
-  const [lang, setLangState] = useState<LangCode>(detectLanguage);
-  function setLang(l: LangCode) {
-    saveLanguage(l);
-    setLangState(l);
-  }
+  // Emergency UI language — auto-detected from the device.
+  const [lang] = useState<LangCode>(detectLanguage);
 
   // Live temperature: debounced feels-like for the typed city, shown with
   // the preload effect while it calculates.
@@ -420,7 +416,7 @@ export default function App() {
       <WhyItMatters />
 
       <CtaBand />
-      <SiteFooter lang={lang} setLang={setLang} />
+      <SiteFooter />
       </div>
     </div>
   );
