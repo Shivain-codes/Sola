@@ -12,8 +12,6 @@ import type { FireHotspot } from "../lib/haze";
  * stays truthful — only the cartography is illustrative.
  */
 
-const BACKDROP_URL =
-  "https://cdn.21st.dev/assets/localized/f2a04222035a445668558f781cecc04117ed2be06b3cc84f223ed8d64e00e44e.png";
 /** Cap animated markers for perf — the card text still reports the true total. */
 const MARKER_CAP = 60;
 
@@ -122,14 +120,7 @@ export function HazeMap({
 
   return (
     <div aria-hidden="true" className="relative size-full overflow-hidden">
-      <div
-        className="absolute inset-0 mask-[linear-gradient(to_bottom,black_50%,transparent)] bg-no-repeat"
-        style={{
-          backgroundImage: `url(${BACKDROP_URL})`,
-          backgroundSize: "530px 430px",
-          backgroundPosition: "center -75px",
-        }}
-      />
+      {/* No cartography backdrop — transparent card background, markers float clean. */}
       {/* Drift arrow */}
       <svg
         className="absolute inset-0 h-full w-full"
@@ -183,7 +174,6 @@ export function HazeMap({
           </span>
         )}
       </motion.div>
-      <div className="absolute inset-0 bg-gradient-to-b from-white to-[50%]" />
     </div>
   );
 }
