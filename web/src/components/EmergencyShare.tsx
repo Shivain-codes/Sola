@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { tr, fill, type LangCode } from "../lib/i18n";
+import { LocationMap } from "./ui/expanded-map";
 
 type Props = {
   cityName: string;
@@ -104,7 +105,16 @@ export default function EmergencyShare({ cityName, jobType, lang }: Props) {
 
       {phase.kind === "ready" && (
         <div className="mt-4">
-          <p className="rounded-lg bg-white/70 p-3 font-mono text-[11px] leading-relaxed whitespace-pre-line text-ink-soft">
+          <div className="flex justify-center">
+            <LocationMap
+              location={cityName}
+              latitude={phase.lat}
+              longitude={phase.lon}
+              zoom={15}
+              defaultExpanded
+            />
+          </div>
+          <p className="rounded-lg bg-white/70 p-3 font-mono text-[11px] leading-relaxed whitespace-pre-line text-ink-soft mt-3">
             {msg}
           </p>
           <div className="mt-3 grid grid-cols-2 gap-2">
