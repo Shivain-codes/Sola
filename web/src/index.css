@@ -232,6 +232,30 @@
   background: #f59e0b;
   box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
 }
+/* White teardrop pin (21st.dev design) with flame badge inside. */
+.haze-pin {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  filter: drop-shadow(0 3px 1px rgba(0, 0, 0, 0.15));
+}
+.haze-pin-face {
+  position: absolute;
+  top: 4px;
+  left: 7px;
+  width: 24px;
+  height: 24px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.haze-pin-face.hot {
+  background: #dc2626;
+}
+.haze-pin-face.nom {
+  background: #f59e0b;
+}
 .haze-city {
   position: relative;
   width: 30px;

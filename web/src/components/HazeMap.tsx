@@ -16,7 +16,15 @@ import type { FireHotspot } from "../lib/haze";
 const MARKER_CAP = 60;
 
 const FLAME_SVG =
-  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="14" height="14"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>';
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="13" height="13"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>';
+
+// White teardrop pin from the 21st.dev design, with a flame badge inside
+// (instead of an avatar photo). Tip of the pin = the hotspot location.
+const PIN_SVG =
+  '<svg fill="none" viewBox="0 0 38 38" width="38" height="38">' +
+  '<path d="M29.607 5.193c5.858 5.857 5.858 15.355 0 21.213l-9.9 9.9-.707.706-.708-.708-9.899-9.898c-5.857-5.858-5.857-15.356 0-21.213 5.858-5.858 15.356-5.858 21.214 0Z" fill="rgba(0,0,0,0.05)"/>' +
+  '<path d="m28.9 25.698-9.9 9.9-9.9-9.9C3.634 20.232 3.634 11.367 9.1 5.9 14.569.432 23.433.432 28.9 5.9c5.467 5.468 5.467 14.332 0 19.8Z" fill="white"/>' +
+  "</svg>";
 
 function fireIcon(hot: boolean, delay: number, flickerDelay: number) {
   return L.divIcon({
@@ -24,10 +32,11 @@ function fireIcon(hot: boolean, delay: number, flickerDelay: number) {
     html:
       `<div class="haze-drop" style="animation-delay:${delay.toFixed(2)}s">` +
       `<div class="haze-flicker" style="animation-delay:${flickerDelay.toFixed(2)}s">` +
-      `<div class="haze-flame ${hot ? "hot" : "nom"}">${FLAME_SVG}</div>` +
-      `</div></div>`,
-    iconSize: [30, 30],
-    iconAnchor: [15, 15],
+      `<div class="haze-pin">${PIN_SVG}` +
+      `<div class="haze-pin-face ${hot ? "hot" : "nom"}">${FLAME_SVG}</div>` +
+      `</div></div></div>`,
+    iconSize: [38, 38],
+    iconAnchor: [19, 34],
   });
 }
 
