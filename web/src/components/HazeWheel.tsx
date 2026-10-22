@@ -104,17 +104,23 @@ const FRESH_DAYS = 120;
     visit (realtime), newest uploads first so the wheel never goes stale, and
     deterministically rotated each day so a single day always brings a fresh
     wheel. Everything comes from Wikimedia Commons — real, freely-licensed
-    photos, each card linking its file page. */
-function useHazeImages(location: string): WorksWheelItem[] {
+    photos, each card linking its file page.
+    Returns null while loading. Never substitutes another city's photos:
+    if Commons has none of this location, the caller shows an empty state. */
+function useHazeImages(location: string): WorksWheelItem[] | null {
   const key = location.trim().toLowerCase() || "singapore";
-  const [items, setItems] = useState<WorksWheelItem[]>(
-    () => FALLBACKS[key] ?? FALLBACKS.singapore,
+  // Curated correct-city fallbacks paint instantly; anything else starts
+  // loading so we never flash another city's photos.
+  const [items, setItems] = useState<WorksWheelItem[] | null>(
+    () => FALLBACKS[key] ?? null,
   );
 
   useEffect(() => {
     let cancelled = false;
-    setItems(FALLBACKS[key] ?? FALLBACKS.singapore);
-    (async () => {
+    setItems(FALLBACKS[key] ?? null);
+    // Debounce: wait for typing to settle before hitting the Commons API.
+    const timer = setTimeout(() => {
+      (async () => {
       try {
         const [haze, smog] = await Promise.all([
           searchCommons(`${location} haze`, 25),
@@ -138,19 +144,22 @@ function useHazeImages(location: string): WorksWheelItem[] {
         const cutoff = Date.now() - FRESH_DAYS * 86400000;
         const fresh = matched.filter((it) => it.uploadedAt >= cutoff);
         const pool = (fresh.length >= 3 ? fresh : matched).slice(0, MAX_ITEMS);
-        if (pool.length >= 3) {
-          // A deterministic daily rotation: every day the wheel opens on a
-          // different slice of the pool, so each single day brings new images.
-          const day = Math.floor(Date.now() / 86400000);
-          const offset = day % pool.length;
-          setItems([...pool.slice(offset), ...pool.slice(0, offset)]);
-        }
+        // A deterministic daily rotation: every day the wheel opens on a
+        // different slice of the pool, so each single day brings new images.
+        const day = Math.floor(Date.now() / 86400000);
+        const offset = pool.length > 0 ? day % pool.length : 0;
+        setItems([...pool.slice(offset), ...pool.slice(0, offset)]);
       } catch {
-        // Keep the curated fallback.
+        // Fetch failed: keep the curated fallback if this city has one,
+        // otherwise stay empty — never another city's photos.
+        if (cancelled) return;
+        setItems(FALLBACKS[key] ?? []);
       }
-    })();
+      })();
+    }, 600);
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
   }, [location, key]);
 
@@ -160,6 +169,7 @@ function useHazeImages(location: string): WorksWheelItem[] {
 export default function HazeWheel({ city }: { city: string }) {
   const location = city.trim() || "Singapore";
   const items = useHazeImages(location);
+  const isSingapore = location.trim().toLowerCase() === "singapore";
 
   return (
     <section
@@ -175,15 +185,30 @@ export default function HazeWheel({ city }: { city: string }) {
         </h2>
       </Reveal>
       <Reveal className="mt-8">
-        <div className="h-[68vh] min-h-[480px] w-full">
-          <WorksWheel
-            items={items}
-            label="Haze watch"
-            action="Source"
-            showIndex={false}
-            className="bg-transparent"
-          />
-        </div>
+        {items === null ? (
+          <div className="flex h-[68vh] min-h-[480px] w-full items-center justify-center">
+            <p className="text-sm text-ink-soft">
+              Finding haze photos of {location}…
+            </p>
+          </div>
+        ) : items.length === 0 ? (
+          <div className="flex h-[68vh] min-h-[480px] w-full items-center justify-center">
+            <p className="max-w-md text-center text-sm leading-relaxed text-ink-soft">
+              No haze photos of {location} on Wikimedia Commons yet — the
+              wheel appears here as soon as photographers upload them.
+            </p>
+          </div>
+        ) : (
+          <div className="h-[68vh] min-h-[480px] w-full">
+            <WorksWheel
+              items={items}
+              label="Haze watch"
+              action="Source"
+              showIndex={false}
+              className="bg-transparent"
+            />
+          </div>
+        )}
       </Reveal>
       <Reveal className="mt-6">
         <p className="text-center text-xs text-ink-soft">
@@ -195,16 +220,20 @@ export default function HazeWheel({ city }: { city: string }) {
             className="underline underline-offset-2 transition-colors hover:text-ink"
           >
             Wikimedia Commons
-          </a>{" "}
-          · Live haze coverage:{" "}
-          <a
-            href="https://www.straitstimes.com/singapore/haze-in-singapore-persists-24-hour-psi-remains-unhealthy-for-all-regions"
-            target="_blank"
-            rel="noreferrer"
-            className="underline underline-offset-2 transition-colors hover:text-ink"
-          >
-            The Straits Times
           </a>
+          {isSingapore && (
+            <>
+              {" "}· Live haze coverage:{" "}
+              <a
+                href="https://www.straitstimes.com/singapore/haze-in-singapore-persists-24-hour-psi-remains-unhealthy-for-all-regions"
+                target="_blank"
+                rel="noreferrer"
+                className="underline underline-offset-2 transition-colors hover:text-ink"
+              >
+                The Straits Times
+              </a>
+            </>
+          )}
         </p>
       </Reveal>
     </section>
