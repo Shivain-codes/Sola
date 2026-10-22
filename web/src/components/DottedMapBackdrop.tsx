@@ -45,7 +45,9 @@ function loadTile(z: number, x: number, y: number): Promise<HTMLImageElement | n
   });
 }
 
-/** Re-render the source canvas as ink dots on white. */
+/** Re-render the source canvas as ink dots on white. Fixed tonal mapping
+ *  tuned for the Esri Light-Gray palette: near-white water stays clean,
+ *  mid-gray land becomes an airy dot field, dark labels/roads dot denser. */
 function halftone(src: HTMLCanvasElement, cell = 5): HTMLCanvasElement {
   const w = src.width;
   const h = src.height;
@@ -65,8 +67,9 @@ function halftone(src: HTMLCanvasElement, cell = 5): HTMLCanvasElement {
       const py = Math.min(cy + (cell >> 1), h - 1);
       const i = (py * w + px) * 4;
       const lum = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114) / 255;
-      const r = half * Math.pow(1 - lum, 0.85);
-      if (r < 0.45) continue;
+      const ink = Math.min(Math.max((0.9 - lum) / 0.22, 0), 1);
+      const r = half * 0.85 * Math.pow(ink, 1.15);
+      if (r < 0.4) continue;
       octx.beginPath();
       octx.arc(cx + half, cy + half, Math.min(r, half), 0, Math.PI * 2);
       octx.fill();
