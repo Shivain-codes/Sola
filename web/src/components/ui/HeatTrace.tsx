@@ -87,7 +87,7 @@ export function HeatTrace({ hours }: { hours: HourlyHeat[] }) {
               textAnchor="middle"
               fontSize="10"
               fill="#8a7d6c"
-              fontFamily='"Space Grotesk", sans-serif'
+              fontFamily='"Geist", sans-serif'
             >
               {String(t).padStart(2, "0")}
             </text>
