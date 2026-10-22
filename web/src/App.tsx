@@ -35,6 +35,7 @@ import { TextReveal } from "./components/ui/text-reveal";
 import { skyForAqi } from "./lib/sky";
 import { SiteNav, CtaBand, SiteFooter } from "./components/site/Site";
 import { HowItWorks, WhyItMatters } from "./components/site/Sections";
+import { SmoothScroll } from "./components/ui/SmoothScroll";
 import HazeWheel from "./components/HazeWheel";
 
 const JOB_TYPES = [
@@ -184,6 +185,7 @@ export default function App() {
   }, [sky.skyTopColor, sky.skyBottomColor]);
 
   return (
+    <SmoothScroll>
     <div id="top" className="grain relative min-h-full overflow-x-clip">
       <SolaPreloader />
       {/* Full-page haze-reactive sky background. Absolute (in-flow): it scrolls
@@ -405,5 +407,6 @@ export default function App() {
       <SiteFooter />
       </div>
     </div>
+    </SmoothScroll>
   );
 }

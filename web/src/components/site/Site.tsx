@@ -1,15 +1,11 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { spring } from "../ui/motion";
 import { TextRevealInView } from "../ui/text-reveal";
 import NavigationBar from "../ui/navigation-bar";
 import { Footer7 } from "../ui/footer-7";
-
-const SCROLL = (id: string) => (e: React.MouseEvent) => {
-  e.preventDefault();
-  document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-};
+import { useLenis, useScrollTo } from "../ui/SmoothScroll";
 
 /* ---------------- Header (scrolls away with the page) ---------------- */
 
@@ -20,6 +16,7 @@ export function SiteNav() {
 /* ---------------- CTA band (transparent, text + button only) ---------------- */
 
 export function CtaBand() {
+  const scrollTo = useScrollTo();
   return (
     <section className="relative">
       <div className="mx-auto flex max-w-6xl flex-col items-start gap-6 px-6 py-16 sm:flex-row sm:items-center sm:justify-between">
@@ -34,7 +31,7 @@ export function CtaBand() {
         </TextRevealInView>
         <a
           href="#app"
-          onClick={SCROLL("app")}
+          onClick={scrollTo("app")}
           className="shrink-0 rounded-full bg-ink px-7 py-4 font-display text-base text-paper transition-colors hover:bg-[#2a241e]"
         >
           Get my plan
@@ -48,21 +45,30 @@ export function CtaBand() {
 
 export function SiteFooter() {
   const [modal, setModal] = useState<null | "privacy" | "terms">(null);
+  const scrollTo = useScrollTo();
+  const lenis = useLenis();
+
+  // Freeze the buttery scroll while a legal modal is open.
+  useEffect(() => {
+    if (!lenis) return;
+    if (modal) lenis.stop();
+    else lenis.start();
+  }, [modal, lenis]);
 
   return (
     <footer>
       <Footer7
         title="Sola"
         titleHref="#top"
-        onTitleClick={SCROLL("top")}
+        onTitleClick={scrollTo("top")}
         description="Reads today's heat for your city and shift, then tells you what to do about it — in plain words."
         sections={[
           {
             title: "Product",
             links: [
-              { name: "Get my plan", href: "#app", onClick: SCROLL("app") },
-              { name: "How it works", href: "#how", onClick: SCROLL("how") },
-              { name: "Why it matters", href: "#why", onClick: SCROLL("why") },
+              { name: "Get my plan", href: "#app", onClick: scrollTo("app") },
+              { name: "How it works", href: "#how", onClick: scrollTo("how") },
+              { name: "Why it matters", href: "#why", onClick: scrollTo("why") },
             ],
           },
           {
