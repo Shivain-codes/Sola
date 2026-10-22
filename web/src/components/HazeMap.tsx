@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Flame } from "lucide-react";
 import type { FireHotspot } from "../lib/haze";
+import { DottedMapBackdrop } from "./DottedMapBackdrop";
 
 /**
  * Haze fire map in the exact 21st.dev Map component format:
@@ -12,9 +13,6 @@ import type { FireHotspot } from "../lib/haze";
  * the actual geography around the entered city.
  */
 
-const BACKDROP_URL =
-  "https://cdn.21st.dev/assets/localized/f2a04222035a445668558f781cecc04117ed2be06b3cc84f223ed8d64e00e44e.png";
-/** Cap animated pins for perf — the card text still reports the true total. */
 const PIN_CAP = 40;
 
 function project(
@@ -128,15 +126,8 @@ export function HazeMap({
 
   return (
     <div aria-hidden="true" className="relative size-full overflow-hidden">
-      {/* Dotted halftone map backdrop (21st.dev) */}
-      <div
-        className="absolute inset-0 mask-[linear-gradient(to_bottom,black_50%,transparent)] bg-no-repeat"
-        style={{
-          backgroundImage: `url(${BACKDROP_URL})`,
-          backgroundSize: "530px 430px",
-          backgroundPosition: "center -75px",
-        }}
-      />
+      {/* Dotted halftone map generated from the REAL region geography */}
+      <DottedMapBackdrop bounds={bounds} />
       {/* Drift arrow — dashes flow toward the tip */}
       <svg
         className="absolute inset-0 z-[5] h-full w-full"
