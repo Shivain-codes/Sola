@@ -124,49 +124,53 @@ export default function EmergencyShare({ cityName, jobType, lang }: Props) {
       )}
 
       {phase.kind === "ready" && (
-        <div className="mt-4">
-          <div className="relative flex justify-center">
-            <span className="absolute top-2 left-1/2 z-30 -translate-x-1/2 inline-flex items-center gap-1.5 rounded-full bg-d-danger px-2.5 py-1 font-display text-[10px] font-semibold tracking-widest text-white uppercase">
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
+        <div className="mt-4 grid gap-5 sm:grid-cols-[auto_1fr] sm:items-start">
+          <div className="relative flex justify-center sm:justify-start">
+            <div className="origin-top scale-[0.82] min-[400px]:scale-100">
+              <span className="absolute top-2 left-1/2 z-30 -translate-x-1/2 inline-flex items-center gap-1.5 rounded-full bg-d-danger px-2.5 py-1 font-display text-[10px] font-semibold tracking-widest text-white uppercase">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
+                </span>
+                Live
               </span>
-              Live
-            </span>
-            <LocationMap
-              location={tr(lang, "emgYourLocation")}
-              latitude={phase.lat}
-              longitude={phase.lon}
-              zoom={15}
-              defaultExpanded
-            />
+              <LocationMap
+                location={tr(lang, "emgYourLocation")}
+                latitude={phase.lat}
+                longitude={phase.lon}
+                zoom={15}
+                defaultExpanded
+              />
+            </div>
           </div>
-          <p className="rounded-lg bg-white/70 p-3 font-mono text-[11px] leading-relaxed whitespace-pre-line text-ink-soft mt-3">
-            {msg}
-          </p>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <a
-              href={waHref}
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-xl bg-[#25D366] px-4 py-3 text-center font-display text-sm font-semibold text-white"
+          <div className="min-w-0">
+            <p className="rounded-xl bg-paper p-4 font-mono text-[11px] leading-relaxed whitespace-pre-line text-ink-soft border border-line">
+              {msg}
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <a
+                href={waHref}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-full bg-[#25D366] px-4 py-3 text-center font-display text-sm font-semibold text-white"
+              >
+                {tr(lang, "emgWa")}
+              </a>
+              <a
+                href={smsHref}
+                className="rounded-full bg-ink px-4 py-3 text-center font-display text-sm font-semibold text-white"
+              >
+                {tr(lang, "emgSms")}
+              </a>
+            </div>
+            <button
+              type="button"
+              onClick={copyLink}
+              className="mt-2 w-full rounded-full border border-line px-4 py-2.5 text-sm font-medium text-ink-soft"
             >
-              {tr(lang, "emgWa")}
-            </a>
-            <a
-              href={smsHref}
-              className="rounded-xl bg-ink px-4 py-3 text-center font-display text-sm font-semibold text-white"
-            >
-              {tr(lang, "emgSms")}
-            </a>
+              {phase.copied ? tr(lang, "emgCopied") : tr(lang, "emgCopy")}
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={copyLink}
-            className="mt-2 w-full rounded-xl border border-line px-4 py-2.5 text-sm font-medium text-ink-soft"
-          >
-            {phase.copied ? tr(lang, "emgCopied") : tr(lang, "emgCopy")}
-          </button>
         </div>
       )}
 
