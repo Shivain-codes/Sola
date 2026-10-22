@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Siren } from "lucide-react";
 import { tr, fill, type LangCode } from "../lib/i18n";
-import { LocationMap } from "./ui/expanded-map";
+import { Map } from "./ui/map";
 import { SolaButton } from "./ui/SolaButton";
 
 type Props = {
@@ -126,7 +126,8 @@ export default function EmergencyShare({ cityName, jobType, lang }: Props) {
       {phase.kind === "ready" && (
         <div className="mt-4 grid gap-5 sm:grid-cols-[auto_1fr] sm:items-start">
           <div className="relative flex justify-center sm:justify-start">
-            <div className="origin-top scale-[0.82] min-[400px]:scale-100">
+            <div className="relative h-[280px] w-[360px] max-w-full origin-top scale-[0.82] min-[400px]:scale-100 overflow-hidden rounded-2xl border border-line">
+              <Map />
               <span className="absolute top-2 left-1/2 z-30 -translate-x-1/2 inline-flex items-center gap-1.5 rounded-full bg-d-danger px-2.5 py-1 font-display text-[10px] font-semibold tracking-widest text-white uppercase">
                 <span className="relative flex h-1.5 w-1.5">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
@@ -134,13 +135,17 @@ export default function EmergencyShare({ cityName, jobType, lang }: Props) {
                 </span>
                 Live
               </span>
-              <LocationMap
-                location={tr(lang, "emgYourLocation")}
-                latitude={phase.lat}
-                longitude={phase.lon}
-                zoom={15}
-                defaultExpanded
-              />
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-white via-white/85 to-transparent px-4 pt-8 pb-3">
+                <p className="font-display text-sm font-semibold text-ink">
+                  {tr(lang, "emgYourLocation")}
+                </p>
+                <p className="font-mono text-[11px] text-ink-soft">
+                  {Math.abs(phase.lat).toFixed(4)}°{" "}
+                  {phase.lat >= 0 ? "N" : "S"},{" "}
+                  {Math.abs(phase.lon).toFixed(4)}°{" "}
+                  {phase.lon >= 0 ? "E" : "W"}
+                </p>
+              </div>
             </div>
           </div>
           <div className="min-w-0">
