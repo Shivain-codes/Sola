@@ -1,17 +1,11 @@
 import { useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { X, Phone } from "lucide-react";
+import { X } from "lucide-react";
 import { spring } from "../ui/motion";
 import { TextRevealInView } from "../ui/text-reveal";
 import NavigationBar from "../ui/navigation-bar";
 import { Footer7 } from "../ui/footer-7";
-import {
-  tr,
-  LANGS,
-  EMERGENCY_NUMBERS,
-  serviceLabel,
-  type LangCode,
-} from "../../lib/i18n";
+import { tr, LANGS, type LangCode } from "../../lib/i18n";
 
 const SCROLL = (id: string) => (e: React.MouseEvent) => {
   e.preventDefault();
@@ -53,57 +47,22 @@ export function CtaBand() {
 
 /* ---------------- Footer + legal modals ---------------- */
 
-/** Emergency numbers directory + language picker, above the main footer. */
-function EmergencyStrip({
+/** Slim language-picker strip in the footer. */
+function LanguageStrip({
   lang,
   setLang,
 }: {
   lang: LangCode;
   setLang: (l: LangCode) => void;
 }) {
-  const [cc, setCc] = useState("SG");
-  const entry =
-    EMERGENCY_NUMBERS.find((e) => e.code === cc) ?? EMERGENCY_NUMBERS[0];
-
   return (
-    <div className="border-y border-line bg-ink text-paper">
-      <div className="mx-auto grid max-w-6xl gap-8 px-6 py-10 sm:grid-cols-[1fr_auto]">
-        <div>
-          <h3 className="font-display text-lg font-semibold">
-            🚨 {tr(lang, "emgDirTitle")}
-          </h3>
-          <p className="mt-1 text-[13px] text-paper/70">
-            {tr(lang, "emgDirDesc")}
-          </p>
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <select
-              value={cc}
-              onChange={(e) => setCc(e.target.value)}
-              aria-label="Country"
-              className="rounded-lg border border-paper/25 bg-transparent px-3 py-2.5 text-sm text-paper"
-            >
-              {EMERGENCY_NUMBERS.map((e) => (
-                <option key={e.code} value={e.code} className="text-ink">
-                  {e.country}
-                </option>
-              ))}
-            </select>
-            {entry.numbers.map((n) => (
-              <a
-                key={n.service}
-                href={`tel:${n.number}`}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-d-danger px-4 py-2.5 font-display text-sm font-semibold text-white"
-              >
-                <Phone size={15} strokeWidth={2.5} />
-                {serviceLabel(lang, n.service)} {n.number}
-              </a>
-            ))}
-          </div>
-        </div>
-        <div className="sm:text-right">
+    <div className="border-t border-line">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
+        <p className="text-[12px] text-ink-soft">{tr(lang, "langAuto")}</p>
+        <div className="flex items-center gap-2">
           <label
             htmlFor="sola-lang"
-            className="font-display text-sm font-medium text-paper/80"
+            className="text-[12px] font-medium text-ink-soft"
           >
             {tr(lang, "langLabel")}
           </label>
@@ -111,17 +70,14 @@ function EmergencyStrip({
             id="sola-lang"
             value={lang}
             onChange={(e) => setLang(e.target.value as LangCode)}
-            className="mt-2 block w-full rounded-lg border border-paper/25 bg-transparent px-3 py-2.5 text-sm text-paper sm:ml-auto sm:w-auto"
+            className="rounded-lg border border-line bg-paper px-3 py-2 text-sm text-ink"
           >
             {LANGS.map((l) => (
-              <option key={l.code} value={l.code} className="text-ink">
+              <option key={l.code} value={l.code}>
                 {l.native}
               </option>
             ))}
           </select>
-          <p className="mt-1.5 text-[11px] text-paper/50">
-            {tr(lang, "langAuto")}
-          </p>
         </div>
       </div>
     </div>
@@ -139,7 +95,7 @@ export function SiteFooter({
 
   return (
     <footer>
-      <EmergencyStrip lang={lang} setLang={setLang} />
+      <LanguageStrip lang={lang} setLang={setLang} />
       <Footer7
         title="Sola"
         titleHref="#top"

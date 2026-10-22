@@ -3,7 +3,6 @@ import {
   CloudSun,
   Droplets,
   Flame,
-  MapPin,
   Sun,
   Thermometer,
   TriangleAlert,
@@ -175,16 +174,6 @@ export default function SafetyCard({
           numbers are still accurate.
         </p>
       )}
-
-      <Card>
-        <CardLabel icon={MapPin}>Finding you in an emergency</CardLabel>
-        <p className="mt-2 text-[15px] leading-relaxed text-ink-soft">
-          Coming soon: a future Sola will let you choose to share your
-          phone&rsquo;s location during a shift, so help can find you after an
-          accident. It will always be opt-in — Sola doesn&rsquo;t track anyone
-          today.
-        </p>
-      </Card>
 
       <p className="pt-1 text-center text-[12px] text-ink-soft">
         Weather &amp; air data: Open-Meteo, fetched fresh for this plan.

@@ -107,7 +107,7 @@ export default function EmergencyShare({ cityName, jobType, lang }: Props) {
         <div className="mt-4">
           <div className="flex justify-center">
             <LocationMap
-              location={cityName}
+              location={tr(lang, "emgYourLocation")}
               latitude={phase.lat}
               longitude={phase.lon}
               zoom={15}

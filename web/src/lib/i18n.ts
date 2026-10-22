@@ -26,7 +26,7 @@ type Key =
   | "emgMsg" | "emgNoLoc"
   | "emgDirTitle" | "emgDirDesc"
   | "emgGeneral" | "emgPolice" | "emgAmbulance" | "emgFire"
-  | "langLabel" | "langAuto";
+  | "langLabel" | "langAuto" | "emgYourLocation";
 
 const en: Record<Key, string> = {
   emgTitle: "🚨 In an emergency",
@@ -51,6 +51,7 @@ const en: Record<Key, string> = {
   emgNoLoc: "(GPS unavailable — I'm in {city}, please call me)",
   emgDirTitle: "Emergency numbers",
   emgDirDesc: "One tap calls emergency services. Select a country:",
+  emgYourLocation: "Your live location",
   emgGeneral: "General",
   emgPolice: "Police",
   emgAmbulance: "Ambulance",
@@ -84,6 +85,7 @@ const STRINGS: Record<LangCode, Record<Key, string>> = {
     emgNoLoc: "(GPS उपलब्ध नहीं — मैं {city} में हूँ, कृपया मुझे कॉल करें)",
     emgDirTitle: "आपातकालीन नंबर",
     emgDirDesc: "एक टैप में आपातकालीन सेवा को कॉल करें। देश चुनें:",
+    emgYourLocation: "आपकी लाइव लोकेशन",
     emgGeneral: "सामान्य",
     emgPolice: "पुलिस",
     emgAmbulance: "एम्बुलेंस",
@@ -114,6 +116,7 @@ const STRINGS: Record<LangCode, Record<Key, string>> = {
     emgNoLoc: "(GPS கிடைக்கவில்லை — நான் {city}-இல் இருக்கிறேன், தயவுசெய்து அழைக்கவும்)",
     emgDirTitle: "அவசர எண்கள்",
     emgDirDesc: "ஒரே தட்டலில் அவசர சேவையை அழைக்கவும். நாட்டைத் தேர்ந்தெடுக்கவும்:",
+    emgYourLocation: "உங்கள் நேரடி இருப்பிடம்",
     emgGeneral: "பொது",
     emgPolice: "காவல்",
     emgAmbulance: "ஆம்புலன்ஸ்",
@@ -144,6 +147,7 @@ const STRINGS: Record<LangCode, Record<Key, string>> = {
     emgNoLoc: "(GPS পাওয়া যায়নি — আমি {city}-তে আছি, দয়া করে কল করুন)",
     emgDirTitle: "জরুরি নম্বর",
     emgDirDesc: "এক ট্যাপে জরুরি সেবায় কল করুন। দেশ বেছে নিন:",
+    emgYourLocation: "আপনার লাইভ অবস্থান",
     emgGeneral: "সাধারণ",
     emgPolice: "পুলিশ",
     emgAmbulance: "অ্যাম্বুলেন্স",
@@ -171,6 +175,7 @@ const STRINGS: Record<LangCode, Record<Key, string>> = {
     emgNoLoc: "（无 GPS——我在{city}，请给我打电话）",
     emgDirTitle: "紧急电话",
     emgDirDesc: "一键拨打紧急服务。请选择国家：",
+    emgYourLocation: "您的实时位置",
     emgGeneral: "通用",
     emgPolice: "警察",
     emgAmbulance: "救护车",
@@ -201,6 +206,7 @@ const STRINGS: Record<LangCode, Record<Key, string>> = {
     emgNoLoc: "(GPS tiada — saya di {city}, sila telefon saya)",
     emgDirTitle: "Nombor kecemasan",
     emgDirDesc: "Satu ketikan untuk menghubungi perkhidmatan kecemasan. Pilih negara:",
+    emgYourLocation: "Lokasi langsung anda",
     emgGeneral: "Umum",
     emgPolice: "Polis",
     emgAmbulance: "Ambulans",
@@ -230,6 +236,7 @@ const STRINGS: Record<LangCode, Record<Key, string>> = {
     emgNoLoc: "(ไม่มี GPS — ฉันอยู่ที่{city} กรุณาโทรหาฉัน)",
     emgDirTitle: "เบอร์ฉุกเฉิน",
     emgDirDesc: "แตะครั้งเดียวเพื่อโทรหาบริการฉุกเฉิน เลือกประเทศ:",
+    emgYourLocation: "ตำแหน่งสดของคุณ",
     emgGeneral: "ทั่วไป",
     emgPolice: "ตำรวจ",
     emgAmbulance: "รถพยาบาล",
@@ -260,6 +267,7 @@ const STRINGS: Record<LangCode, Record<Key, string>> = {
     emgNoLoc: "(Không có GPS — tôi đang ở {city}, vui lòng gọi cho tôi)",
     emgDirTitle: "Số điện thoại khẩn cấp",
     emgDirDesc: "Một chạm để gọi dịch vụ khẩn cấp. Chọn quốc gia:",
+    emgYourLocation: "Vị trí trực tiếp của bạn",
     emgGeneral: "Chung",
     emgPolice: "Cảnh sát",
     emgAmbulance: "Cấp cứu",
@@ -290,6 +298,7 @@ const STRINGS: Record<LangCode, Record<Key, string>> = {
     emgNoLoc: "(GPS tidak tersedia — saya di {city}, tolong telepon saya)",
     emgDirTitle: "Nomor darurat",
     emgDirDesc: "Satu ketukan untuk menelepon layanan darurat. Pilih negara:",
+    emgYourLocation: "Lokasi langsung Anda",
     emgGeneral: "Umum",
     emgPolice: "Polisi",
     emgAmbulance: "Ambulans",
@@ -321,6 +330,7 @@ const STRINGS: Record<LangCode, Record<Key, string>> = {
     emgDirTitle: "အရေးပေါ်ဖုန်းနံပါတ်များ",
     emgDirDesc:
       "တစ်ချက်နှိပ်ရုံနဲ့ အရေးပေါ်ဝန်ဆောင်မှုကို ခေါ်နိုင်တယ်။ နိုင်ငံရွေးပါ:",
+    emgYourLocation: "သင့်ရဲ့ တိုက်ရိုက်တည်နေရာ",
     emgGeneral: "အထွေထွေ",
     emgPolice: "ရဲ",
     emgAmbulance: "လူနာတင်ယာဉ်",

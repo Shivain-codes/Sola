@@ -19,7 +19,7 @@ interface LocationMapProps {
   zoom?: number;
   /** Additional CSS classes */
   className?: string;
-  /** Map tile provider */
+  /** Map tile provider — openstreetmap is keyless; carto now needs an API key */
   tileProvider?: "openstreetmap" | "carto-light" | "carto-dark";
   /** Whether the card starts expanded */
   defaultExpanded?: boolean;
@@ -61,7 +61,7 @@ export function LocationMap({
   longitude = -122.4194,
   zoom = 14,
   className,
-  tileProvider = "carto-light",
+  tileProvider = "openstreetmap",
   defaultExpanded = false,
 }: LocationMapProps) {
   const [isHovered, setIsHovered] = useState(false);
