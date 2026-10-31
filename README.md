@@ -164,6 +164,22 @@ The browser POSTs the computed hourly heat data; Nova writes the plan from it.
 One feature, done well: **city + shift in → safety plan out.** No auth, no
 database, no push notifications, no language toggle. Deliberately cut.
 
+## A note on where Sola comes from
+
+Sola was built in October, shaped by the Singapore haze situation — when
+smoke and heat made it hard for people outdoors to know what was safe to do
+that day.
+
+Thank you to **Felicia Huang (Senior Manager, AWS Singapore)**, whose
+feedback helped me think more clearly about this: focus on real-world
+problems over technology. That advice shaped Sola — a simple plan in plain
+words, for the people who can't come inside, instead of another dashboard.
+
+This is a small contribution to people's safety in Singapore, and I hope it
+helps someone stay a little safer outdoors.
+
+---
+
 ## Credits & data
 
 - Weather & geocoding: **[Open-Meteo](https://open-meteo.com/)** — free, no API
