@@ -4,9 +4,21 @@ import { Reveal } from "./ui/Reveal";
 
 /* ------------------------------------------------------------------ */
 /* Haze watch — a turning wheel of real haze skies for one location.   */
-/* Images are fetched live from Wikimedia Commons (freely licensed),   */
-/* filtered to the location; a curated set covers the API being down.  */
+/* Images are fetched live from Wikimedia Commons (freely licensed).   */
+/* Where a human-curated Commons category exists for the location,    */
+/* that category is the dynamic source — keyword search is only a      */
+/* fallback, because keyword search matches filenames, not photos      */
+/* (a yacht named "Haze" in New York, or a satellite photo titled      */
+/* "... New York ... Very Heavy Haze", both pass a keyword filter).   */
+/* A curated set paints instantly and covers the API being down.      */
 /* ------------------------------------------------------------------ */
+
+/** Human-curated Commons categories — membership is relevance, not a
+    filename match. New uploads to the category appear automatically. */
+const CATEGORY_MAP: Record<string, string> = {
+  "new york": "Smoke from 2023 Quebec wildfires in New York City",
+  singapore: "Haze in Singapore",
+};
 
 const FALLBACKS: Record<string, WorksWheelItem[]> = {
   singapore: [
@@ -47,6 +59,26 @@ const FALLBACKS: Record<string, WorksWheelItem[]> = {
       image:
         "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Smog_and_IITD.jpg/960px-Smog_and_IITD.jpg",
       href: "https://commons.wikimedia.org/wiki/File:Smog_and_IITD.jpg",
+    },
+  ],
+  "new york": [
+    {
+      title: "Orange haze hides Manhattan — Jun 2023",
+      image:
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Orange_Haze_Hides_Manhattan.jpg/1280px-Orange_Haze_Hides_Manhattan.jpg",
+      href: "https://commons.wikimedia.org/wiki/File:Orange_Haze_Hides_Manhattan.jpg",
+    },
+    {
+      title: "Empire State haze — Jun 2023",
+      image:
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Empire_State_Haze_%2852958371285%29.jpg/1280px-Empire_State_Haze_%2852958371285%29.jpg",
+      href: "https://commons.wikimedia.org/wiki/File:Empire_State_Haze_(52958371285).jpg",
+    },
+    {
+      title: "Empire State Building — Jun 7, 2023",
+      image:
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Empire_State_Building_on_June_7%2C_2023.jpg/1280px-Empire_State_Building_on_June_7%2C_2023.jpg",
+      href: "https://commons.wikimedia.org/wiki/File:Empire_State_Building_on_June_7,_2023.jpg",
     },
   ],
 };
@@ -95,6 +127,59 @@ async function searchCommons(
   return items;
 }
 
+/** Category members, parsed the same way. Unlike keyword search, every
+    member was placed in the category by a human, so no title filter is
+    needed here — and no title filter can let a yacht or a satellite
+    photo through. Non-bitmap files (tif/tiff) are skipped by the
+    thumburl check in practice; keep only files with a usable thumb. */
+async function searchCategory(
+  category: string,
+  limit: number,
+): Promise<HazeImage[]> {
+  const url =
+    "https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*" +
+    `&generator=categorymembers&gcmtitle=${encodeURIComponent("Category:" + category)}` +
+    `&gcmtype=file&gcmlimit=${limit}&prop=imageinfo&iiprop=url|timestamp&iiurlwidth=900`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("commons category failed");
+  const data = await res.json();
+  const pages: Record<string, CommonsPage> = data?.query?.pages ?? {};
+  const items: HazeImage[] = [];
+  for (const p of Object.values(pages)) {
+    const info = p.imageinfo?.[0];
+    if (!info?.thumburl) continue;
+    if (/\.tiff?$/i.test(p.title ?? "")) continue;
+    const cleaned = (p.title ?? "Haze")
+      .replace(/^File:/, "")
+      .replace(/\.[a-z0-9]+$/i, "")
+      .replace(/_/g, " ")
+      .replace(/\s*\([\d\s]+\)/g, "")
+      .replace(/\s*\b\d{8}\b\s*\b\d{6}\b/g, "")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+    items.push({
+      title: cleaned.slice(0, 42),
+      image: info.thumburl,
+      href: info.descriptionurl,
+      uploadedAt: info.timestamp ? +new Date(info.timestamp) : 0,
+      matchText: cleaned.toLowerCase(),
+    });
+  }
+  return items;
+}
+
+/** Filename traps that pass a keyword filter but are not haze weather:
+    a vessel/person named Haze, a satellite programme, a space photo. */
+const KEYWORD_EXCLUSIONS = [
+  "yacht",
+  "clipper",
+  "ship",
+  "apollo",
+  "ast-",
+  "jenna haze",
+  "scott haze",
+];
+
 /** The wheel reads best with a tight set, and only fresh uploads belong in it. */
 const MAX_ITEMS = 6;
 /** "New" = uploaded within the last 120 days — this haze season, not 2013. */
@@ -122,21 +207,47 @@ function useHazeImages(location: string): WorksWheelItem[] | null {
     const timer = setTimeout(() => {
       (async () => {
       try {
-        const [haze, smog] = await Promise.all([
-          searchCommons(`${location} haze`, 25),
-          searchCommons(`${location} smog`, 25),
-        ]);
-        if (cancelled) return;
-        const seen = new Set<string>();
-        const matched = [...haze, ...smog].filter((it) => {
-          if (seen.has(it.image)) return false;
-          seen.add(it.image);
-          const t = it.matchText;
-          // Only this location — nothing else — and genuinely haze/smog.
-          return (
-            t.includes(key) && (t.includes("haze") || t.includes("smog"))
-          );
-        });
+        // Dynamic, category-first: if this city has a curated Commons
+        // category, its members are the pool — newest first, daily
+        // rotation below. New uploads to the category appear on their
+        // own, so this stays dynamic without re-curating by hand.
+        // (No fresh-days filter here: a 2023 event category is the
+        // correct record for that city, not "this season".)
+        const category = CATEGORY_MAP[key];
+        let matched: HazeImage[] = [];
+        if (category) {
+          const fromCategory = await searchCategory(category, 50);
+          if (cancelled) return;
+          const seenCat = new Set<string>();
+          matched = fromCategory.filter((it) => {
+            if (seenCat.has(it.image)) return false;
+            seenCat.add(it.image);
+            return true;
+          });
+          // A thin category is worse than keyword search — drop it so
+          // the keyword path below runs instead.
+          if (matched.length < 3) matched = [];
+        }
+        if (matched.length === 0) {
+          const [haze, smog] = await Promise.all([
+            searchCommons(`${location} haze`, 25),
+            searchCommons(`${location} smog`, 25),
+          ]);
+          if (cancelled) return;
+          const seen = new Set<string>();
+          matched = [...haze, ...smog].filter((it) => {
+            if (seen.has(it.image)) return false;
+            seen.add(it.image);
+            const t = it.matchText;
+            // Only this location — nothing else — and genuinely haze/smog,
+            // and not a known filename trap (yacht/person/space photo).
+            return (
+              t.includes(key) &&
+              (t.includes("haze") || t.includes("smog")) &&
+              !KEYWORD_EXCLUSIONS.some((w) => t.includes(w))
+            );
+          });
+        }
         // Newest uploads first — fresh photos, not decade-old ones.
         matched.sort((a, b) => b.uploadedAt - a.uploadedAt);
         // Only new uploads make the wheel. If fewer than 3 are fresh, fall
