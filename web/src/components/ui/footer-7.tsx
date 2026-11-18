@@ -24,6 +24,10 @@ interface Footer7Props {
     name: string;
     onClick?: (e: MouseEvent) => void;
   }>;
+  credits?: Array<{
+    name: string;
+    role: string;
+  }>;
 }
 
 const Footer7 = ({
@@ -35,6 +39,7 @@ const Footer7 = ({
   socialLinks = [],
   copyright = "© 2026 Sola",
   legalLinks = [],
+  credits = [],
 }: Footer7Props) => {
   return (
     <section className="py-16">
@@ -97,6 +102,25 @@ const Footer7 = ({
             ))}
           </div>
         </div>
+        {credits.length > 0 && (
+          <div className="mt-12 border-t border-line pt-8">
+            <h3 className="font-display text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">
+              Credits
+            </h3>
+            <div className="mt-5 flex flex-col gap-5 sm:flex-row sm:gap-16">
+              {credits.map((credit, creditIdx) => (
+                <div key={creditIdx}>
+                  <p className="text-sm font-semibold text-ink">
+                    {credit.name}
+                  </p>
+                  <p className="mt-0.5 text-sm text-muted-foreground">
+                    {credit.role}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="mt-8 flex flex-col justify-between gap-4 border-t border-line py-6 text-xs font-medium text-muted-foreground md:flex-row md:items-center md:text-left">
           <p className="order-2 lg:order-1">{copyright}</p>
           <ul className="order-1 flex flex-col gap-2 md:order-2 md:flex-row md:gap-6">
