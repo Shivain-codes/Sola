@@ -82,6 +82,13 @@ export function SiteFooter() {
           { name: "Privacy", onClick: () => setModal("privacy") },
           { name: "Terms", onClick: () => setModal("terms") },
         ]}
+        credits={[
+          { name: "Shivain Gupta", role: "Developed Sola" },
+          {
+            name: "Felicia Huang",
+            role: "Senior Manager, AWS Singapore",
+          },
+        ]}
       />
 
       <AnimatePresence>
